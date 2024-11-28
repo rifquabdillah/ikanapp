@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ikanapps/screen/detailOrder.dart';
 import 'package:ikanapps/screen/orderHistory.dart';
+import 'package:ikanapps/screen/pembelian.dart';
 import 'orderScreen.dart';
 import 'stockManagementScreen.dart';
 import 'reportScreen.dart';
@@ -335,8 +336,14 @@ class DashboardScreen extends StatelessWidget {
                           builder: (context) => const TransactionScreen(),
                         ),
                       );
-                    } else if (_menuItems[index]['title'] == "Produk") {
-                      // Navigasi ke Produk Screen
+                    } else if (_menuItems[index]['title'] == "Pembelian") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PembelianScreen(
+                          ),
+                        ),
+                      );
                     } else if (_menuItems[index]['title'] == "Order History") {
                       Navigator.push(
                         context,
@@ -445,7 +452,7 @@ class DashboardScreen extends StatelessWidget {
 }
 
   final List<Map<String, dynamic>> _menuItems = [
-  {"title": "Produk", "icon": Icons.production_quantity_limits, "color": Colors.teal.shade300},
+  {"title": "Pembelian", "icon": Icons.production_quantity_limits, "color": Colors.teal.shade300},
   {"title": "Transaksi", "icon": Icons.monetization_on_outlined, "color": Colors.green.shade300},
   {"title": "Order", "icon": Icons.sell, "color": Colors.red.shade300},
   {"title": "Order History", "icon": Icons.shopping_bag, "color": Colors.purple.shade300},
