@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'confirmationScreen.dart';
+import 'package:ikanapps/provider/StockProvider.dart';
+import 'package:ikanapps/model/Stock.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({Key? key}) : super(key: key);
@@ -43,8 +46,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.teal,
-        title: const Text("Transaksi Ikan"),
+        backgroundColor: const Color(0xFFd9e6ec),
+        title: const Text("Orderan Ikan"),
         centerTitle: true,
         elevation: 5,
         leading: IconButton(
@@ -76,57 +79,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
               ),
               if (_selectedCustomer != null) ...[
                 const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Mengurangi padding horizontal
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.black54,
-                          width: 1,
-                        ),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "${_selectedCustomer!['phone']}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Mengurangi padding horizontal
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.black54,
-                          width: 1,
-                        ),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft, // Menjaga teks tetap di kiri
-                        child: Text(
-                          "${_selectedCustomer!['address']}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                _buildCustomerInfo("Phone", _selectedCustomer!['phone']!),
+                _buildCustomerInfo("Address", _selectedCustomer!['address']!),
               ],
               const SizedBox(height: 20),
               DropdownField<String>(
@@ -141,92 +95,60 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
               if (_selectedFish != null)
-                DropdownField<String>(
-                  value: _selectedFishVariant,
-                  items: _fishVariants[_selectedFish!] ?? [],
-                  label: "Pilih Varian Ikan",
-                  itemLabel: (item) => item,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFishVariant = value;
-                    });
-                  },
-                ),
-              const SizedBox(height: 20),
+                ...[
+                  const SizedBox(height: 20),
+                  DropdownField<String>(
+                    value: _selectedFishVariant,
+                    items: _fishVariants[_selectedFish!] ?? [],
+                    label: "Pilih Varian Ikan",
+                    itemLabel: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFishVariant = value;
+                      });
+                    },
+                  ),
+                ],
               if (_selectedFishVariant != null)
-                DropdownField<String>(
-                  value: _selectedFishCount,
-                  items: _fishCountOptions,
-                  label: "Bobot",
-                  itemLabel: (item) => item,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFishCount = value;
-                    });
-                  },
-                ),
-              const SizedBox(height: 20),
+                ...[
+                  const SizedBox(height: 20),
+                  DropdownField<String>(
+                    value: _selectedFishCount,
+                    items: _fishCountOptions,
+                    label: "Bobot",
+                    itemLabel: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFishCount = value;
+                      });
+                    },
+                  ),
+                ],
               if (_selectedFishCount != null)
-                TextField(
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
+                ...[
+                  const SizedBox(height: 20),
+                  _buildTextField("Jumlah Transaksi", (value) {
                     setState(() {
                       _quantity = value;
                     });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Jumlah Transaksi",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              const SizedBox(height: 20),
+                  }),
+                ],
               if (_quantity != null)
-                TextField(
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
+                ...[
+                  const SizedBox(height: 20),
+                  _buildTextField("Harga (per kg)", (value) {
                     setState(() {
                       _price = value;
                     });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Harga (per kg)",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                  }),
+                ],
               const SizedBox(height: 15),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_selectedCustomer != null &&
-                        _selectedFish != null &&
-                        _selectedFishVariant != null &&
-                        _selectedFishCount != null &&
-                        _quantity != null) {
-                      _addOrder();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Mohon lengkapi semua data!"),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    foregroundColor: Colors.white,
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat',
-                    ),
-                  ),
+                  onPressed: _canAddOrder() ? _addOrder : null,
+                  style: _buttonStyle(),
                   child: const Text("Tambah Pesanan"),
                 ),
               ),
@@ -237,41 +159,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
               ),
               const SizedBox(height: 10),
               _buildOrderTable(),
-              ElevatedButton(
-                onPressed: () {
-                  if (_orderList.isNotEmpty && _selectedCustomer != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ConfirmationScreen(
-                          customerData: _selectedCustomer!,
-                          orderList: _orderList,
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Pastikan ada pesanan dan customer terpilih!"),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal, // Warna latar belakang tombol
-                  padding: const EdgeInsets.symmetric(vertical: 16.0), // Padding vertikal
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0), // Sudut tombol melengkung
-                  ),
-                  foregroundColor: Colors.white, // Warna teks tombol
-                  textStyle: const TextStyle(
-                    fontSize: 18, // Ukuran font
-                    fontWeight: FontWeight.bold, // Berat font
-                    fontFamily: 'Montserrat', // Menetapkan font keluarga
-                  ),
+              const SizedBox(height: 10),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _canCheckout() ? _processTransaction : null,
+                  style: _buttonStyle(),
+                  child: const Text("Checkout Transaksi"),
                 ),
-                child: const Text("Checkout Transaksi"),
-              )
+              ),
             ],
           ),
         ),
@@ -279,31 +174,95 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
-  Widget DropdownField<T>({
-    required T? value,
-    required List<T> items,
-    required String label,
-    required ValueChanged<T?>? onChanged,
-    required String Function(T) itemLabel,
-    bool isEnabled = true,
-  }) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      items: items.map((item) {
-        return DropdownMenuItem<T>(
-          value: item,
-          child: Text(itemLabel(item)),
-        );
-      }).toList(),
-      onChanged: isEnabled ? onChanged : null,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+  Widget _buildCustomerInfo(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black54),
+      ),
+      child: Text(
+        "$label: $value",
+        style: const TextStyle(fontSize: 16, fontFamily: 'Montserrat'),
       ),
     );
+  }
+
+  Widget _buildTextField(String label, ValueChanged<String> onChanged) {
+    return TextField(
+      keyboardType: TextInputType.number,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
+
+  ButtonStyle _buttonStyle() {
+    return ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFd9e6ec),
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      foregroundColor: Colors.black45,
+      textStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Montserrat',
+      ),
+    );
+  }
+
+  bool _canAddOrder() {
+    return _selectedCustomer != null &&
+        _selectedFish != null &&
+        _selectedFishVariant != null &&
+        _selectedFishCount != null &&
+        _quantity != null;
+  }
+
+  bool _canCheckout() {
+    return _orderList.isNotEmpty && _selectedCustomer != null;
+  }
+
+  void _addOrder() {
+    setState(() {
+      _orderList.add({
+        'customer': _selectedCustomer!['name']!,
+        'fish': _selectedFish!,
+        'variant': _selectedFishVariant!,
+        'weight': _selectedFishCount!,
+        'quantity': _quantity!,
+        'price': _price ?? "0",
+      });
+      _resetSelection();
+    });
+  }
+
+  void _resetSelection() {
+    _selectedFish = null;
+    _selectedFishVariant = null;
+    _selectedFishCount = null;
+    _quantity = null;
+    _price = null;
+  }
+
+  void _processTransaction() {
+    final stockProvider = Provider.of<StockProvider>(context, listen: false);
+    for (var order in _orderList) {
+      final fishName = order['fish']!;
+      final quantity = int.tryParse(order['quantity']!) ?? 0;
+      stockProvider.reduceStock(fishName, quantity);
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Transaksi selesai!")),
+    );
+    setState(() {
+      _orderList.clear();
+      _selectedCustomer = null;
+    });
   }
 
   Widget _buildOrderTable() {
@@ -324,32 +283,45 @@ class _TransactionScreenState extends State<TransactionScreen> {
       }).toList(),
     );
   }
+}
 
-  void _addOrder() {
-    setState(() {
-      _orderList.add({
-        'customer': _selectedCustomer!['name']!,
-        'fish': _selectedFish!,
-        'variant': _selectedFishVariant!,
-        'weight': _selectedFishCount!,
-        'quantity': _quantity!,
-        'price': _price ?? "0", // Menyimpan harga jika diisi
-      });
-      _selectedFish = null;
-      _selectedFishVariant = null;
-      _selectedFishCount = null;
-      _quantity = null;
-      _price = null; // Reset harga setelah menambah pesanan
-    });
-  }
+class DropdownField<T> extends StatelessWidget {
+  final T? value;
+  final List<T> items;
+  final String label;
+  final bool isEnabled;
+  final ValueChanged<T?>? onChanged;
+  final String Function(T) itemLabel;
 
-  void _processTransaction() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Transaksi selesai!")),
+  const DropdownField({
+    required this.value,
+    required this.items,
+    required this.label,
+    this.onChanged,
+    required this.itemLabel,
+    this.isEnabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      child: DropdownButton<T>(
+        isExpanded: true,
+        value: value,
+        items: items
+            .map((item) => DropdownMenuItem<T>(
+          value: item,
+          child: Text(itemLabel(item)),
+        ))
+            .toList(),
+        onChanged: isEnabled ? onChanged : null,
+        underline: const SizedBox(),
+        isDense: true,
+      ),
     );
-    setState(() {
-      _orderList.clear();
-      _selectedCustomer = null; // Reset customer setelah transaksi selesai
-    });
   }
 }
