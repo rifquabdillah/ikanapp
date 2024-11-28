@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'detailOrder.dart';
+import 'package:quickalert/quickalert.dart';
+import 'package:intl/intl.dart'; // Import intl
 
 class ConfirmationScreen extends StatelessWidget {
   final Map<String, String> customerData;
@@ -11,8 +13,28 @@ class ConfirmationScreen extends StatelessWidget {
     required this.orderList,
   }) : super(key: key);
 
+  // Function to generate order ID automatically
+  String _generateOrderId() {
+    final random = Random();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;  // Use timestamp for uniqueness
+    final randomSuffix = random.nextInt(1000);  // Adding random suffix
+    return 'ORD-${timestamp.toString()}-${randomSuffix.toString()}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final orderId = _generateOrderId();
+
+    String shipmentStatus = orderList.isNotEmpty && orderList.first['shipmentStatus'] != null
+        ? orderList.first['shipmentStatus']!
+        : 'Unknown';
+    String paymentStatus = orderList.isNotEmpty && orderList.first['paymentStatus'] != null
+        ? orderList.first['paymentStatus']!
+        : 'Unknown';
+
+    final updatedCustomerData = Map<String, String>.from(customerData)
+      ..['orderId'] = orderId;  // Add orderId to customerData
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.teal,
@@ -27,10 +49,10 @@ class ConfirmationScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionTitle("Informasi Pelanggan"),
-              _buildCustomerInfo(),
+              _buildCustomerInfo(updatedCustomerData),
               const SizedBox(height: 20),
               _buildSectionTitle("Daftar Pesanan"),
-              if (orderList.isNotEmpty) _buildOrderList(),
+              if (orderList.isNotEmpty) _buildOrderList(shipmentStatus, paymentStatus),
               if (orderList.isEmpty)
                 const Center(child: Text("Belum ada pesanan.")),
               const SizedBox(height: 20),
@@ -47,7 +69,7 @@ class ConfirmationScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
           color: Colors.teal,
@@ -56,13 +78,15 @@ class ConfirmationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCustomerInfo() {
+  Widget _buildCustomerInfo(Map<String, String> customerData) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow("Nama", customerData['nama']),
+        _buildInfoRow("ID Order", customerData['orderId']),
+        _buildInfoRow("Nama", customerData['name']),
         _buildInfoRow("Telepon", customerData['phone']),
         _buildInfoRow("Alamat", customerData['address']),
+        const SizedBox(height: 10),
       ],
     );
   }
@@ -89,79 +113,166 @@ class ConfirmationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOrderList() {
-    return Column(
-      children: orderList.map((order) {
-        return Card(
-          elevation: 3,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16.0),
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildOrderList(String shipmentStatus, String paymentStatus) {
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            ...orderList.map((order) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          order['fish'] ?? "Unknown Fish",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                        Text(
+                          "${order['quantity']} Kg",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "${order['variant'] ?? 'None'}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          "${order['weight'] ?? 'Unknown'}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Rp.${NumberFormat('###0', 'id_ID').format(double.tryParse(order['price'] ?? '0.00') ?? 0.0)}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w600,
+                        color: Colors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            const Divider(color: Colors.grey),
+            const SizedBox(height: 8),
+            // Total Harga
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Menambahkan nama customer di sini
-                Text(
-                  customerData['nama'] ?? 'Nama tidak tersedia', // Menampilkan nama customer
+                const Text(
+                  "Total Harga:",
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
                     fontSize: 16,
-                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Montserrat',
                   ),
                 ),
-                const SizedBox(height: 4),
-                // Nama Ikan
                 Text(
-                  order['fish']!,
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  "Rp.${NumberFormat('###0', 'id_ID').format(orderList.fold(0.0, (total, order) {
+                    final price = double.tryParse(order['price'] ?? '0') ?? 0.0;
+                    final quantity = double.tryParse(order['quantity'] ?? '1') ?? 1;
+                    return total + (price * quantity);
+                  }))}",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Montserrat',
+                  ),
                 ),
               ],
             ),
-            subtitle: Text(
-              "Varian: ${order['variant']} - Jumlah: ${order['quantity']}",
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            trailing: Text(
-              "Bobot: ${order['weight']}",
-              style: TextStyle(color: Colors.teal),
-            ),
-          ),
-        );
-      }).toList(),
+          ],
+        ),
+      ),
     );
   }
 
 
   Widget _buildConfirmButton(BuildContext context) {
-    return Center(
+    return SizedBox(
+      width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.teal,
           padding: const EdgeInsets.symmetric(vertical: 14.0),
-          minimumSize: Size(double.infinity, 50),
+          backgroundColor: Colors.teal,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.0),
           ),
         ),
-        onPressed: () {
-          // Navigasi ke halaman OrderHistory setelah konfirmasi
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OrderHistoryScreen(
-                orderList: orderList, customerData: {}, // Mengirimkan daftar order yang ada
-              ),
-            ),
+        onPressed: () async {
+          // Show loading dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            },
+          );
+
+          // Simulate delay (like network request)
+          await Future.delayed(const Duration(seconds: 2));
+
+          // Dismiss loading dialog
+          Navigator.pop(context);
+
+          // Show QuickAlert success dialog
+          QuickAlert.show(
+            context: context,
+            type: QuickAlertType.success,
+            title: 'Order Berhasil',
+            text: 'Pesanan telah berhasil dilakukan',
+            confirmBtnText: 'OK',
+            onConfirmBtnTap: () {
+              Navigator.pop(context); // Close the QuickAlert dialog
+              // Navigate to the OrderHistoryScreen
+              Navigator.pushReplacementNamed(context, '/orderHistoryScreen');
+            },
           );
         },
         child: const Text(
-          "Order",
+          'Order',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
             color: Colors.white,
+            fontFamily: 'Montserrat',
           ),
         ),
       ),

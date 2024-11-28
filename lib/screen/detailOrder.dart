@@ -1,195 +1,229 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Import intl
 
-class OrderHistoryScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> orderList;
-  final Map<String, String> customerData; // Parameter untuk data pelanggan
+class OrderDetailScreen extends StatelessWidget {
+  final Map<String, String> customerData;
+  final List<Map<String, String>> orderList;
 
-  const OrderHistoryScreen({Key? key, required this.orderList, required this.customerData}) : super(key: key);
+  const OrderDetailScreen({
+    Key? key,
+    required this.customerData,
+    required this.orderList,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    String shipmentStatus = orderList.isNotEmpty
+        ? orderList.first['shipmentStatus'] ?? 'Unknown'
+        : 'Unknown';
+    String paymentStatus = orderList.isNotEmpty
+        ? orderList.first['paymentStatus'] ?? 'Unknown'
+        : 'Unknown';
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.teal,
-        title: const Text("Daftar Orderan"),
+        title: const Text("Order"),
         centerTitle: true,
-        elevation: 5,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              // Menampilkan daftar orderan
-              if (orderList.isNotEmpty)
-                Column(
-                  children: orderList.map((order) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Card(
-                        elevation: 2,
-                        color: const Color(0xffFAF9F6),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Sebelah Kiri: Nama Customer, Jenis Ikan, Varian Ikan, Status Pengiriman
-                              Expanded(
-                                flex: 2,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Nama Customer
-                                    Text(
-                                      customerData['name'] ?? 'Unknown', // Menampilkan nama customer dari customerData
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Montserrat',
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    // Nama Ikan
-                                    Text(
-                                      order['fish'] ?? 'Unknown', // Nama ikan
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Montserrat',
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    // Varian Ikan
-                                    Text(
-                                      order['variant'] ?? 'No variant', // Varian ikan
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontFamily: 'Montserrat',
-                                        fontWeight: FontWeight.w300,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    // Status Pengiriman
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Pengiriman: ',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: 'Montserrat',
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                        Text(
-                                          _getShipmentStatus(order['shipment'] ?? 'Proses'),
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: 'Montserrat',
-                                            fontWeight: FontWeight.w400,
-                                            color: _getShipmentColor(order['shipment'] ?? ''),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Sebelah Kanan: Jumlah yang dibeli
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    'Jumlah: ${order['quantity'] ?? '0'}', // Jumlah ikan
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontFamily: 'Montserrat',
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Bobot: ${order['weight'] ?? '0'}', // Bobot ikan
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xffECB709),
-                                      fontFamily: 'Montserrat',
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+        child: ListView(
+          children: [
+            Card(
+              elevation: 3,
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Informasi pelanggan
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "${customerData['name'] ?? 'Unknown'}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Montserrat',
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                )
-              else
-                const Center(child: Text("Tidak ada order yang tersedia.")),
-            ],
-          ),
+                        Text(
+                          " ${customerData['orderId'] ?? 'Unknown'}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "${customerData['address'] ?? 'Unknown'}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ...orderList.map((order) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  order['fish'] ?? "Unknown Fish",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                                Text(
+                                  "${order['quantity']} Kg",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "${order['variant'] ?? 'None'}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'Montserrat',
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                Text(
+                                  "${order['weight']}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Rp.${NumberFormat('###0', 'id_ID').format(double.tryParse(order['price'] ?? '0.00') ?? 0.0)}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w600,
+                                color: Colors.teal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    const Divider(color: Colors.grey),
+                    const SizedBox(height: 8),
+
+                    // Status pengiriman dan pembayaran hanya ditampilkan sekali
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Shipment Status:",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                        Text(
+                          shipmentStatus,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Montserrat',
+                            color: Colors.blueGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Payment Status:",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                        Text(
+                          paymentStatus,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Montserrat',
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.grey),
+                    const SizedBox(height: 8),
+
+                    // Total harga
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Total Harga:",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                        Text(
+                          "Rp.${NumberFormat('###0', 'id_ID').format(orderList.fold(0.0, (total, order) {
+                            final price = double.tryParse(order['price'] ?? '0') ?? 0.0;
+                            final quantity = double.tryParse(order['quantity'] ?? '0') ?? 0.0;
+                            return total + (price * quantity);
+                          }))}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                            color: Colors.teal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-
-  // Membuat row informasi
-  Widget _buildInfoRow(String label, String? value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "$label:",
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          Text(
-            value ?? "-",
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Menentukan warna untuk status pengiriman
-  Color _getShipmentColor(String shipment) {
-    switch (shipment.toLowerCase()) {
-      case 'open':
-        return Colors.green;
-      case 'proses':
-        return Colors.grey;
-      case 'kirim':
-        return Colors.orange;
-      case 'diterima':
-        return Colors.green;
-      default:
-        return Colors.black;
-    }
-  }
-
-  // Menentukan status pengiriman berdasarkan value
-  String _getShipmentStatus(String shipment) {
-    switch (shipment.toLowerCase()) {
-      case 'open':
-        return 'Open';
-      case 'proses':
-        return 'Proses';
-      case 'kirim':
-        return 'Kirim';
-      case 'diterima':
-        return 'Diterima';
-      default:
-        return 'Status tidak diketahui';
-    }
-  }
 }
+

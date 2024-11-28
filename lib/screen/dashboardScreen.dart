@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ikanapps/screen/detailOrder.dart';
+import 'package:ikanapps/screen/orderHistory.dart';
 import 'transactionScreen.dart';
 import 'stockManagementScreen.dart';
 import 'reportScreen.dart';
@@ -6,7 +8,6 @@ import 'reportScreen.dart';
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({Key? key}) : super(key: key);
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFd9e6ec),
@@ -15,7 +16,7 @@ class DashboardScreen extends StatelessWidget {
         elevation: 0,
         title: Row(
           children: [
-            CircleAvatar(
+            const CircleAvatar(
               backgroundImage: NetworkImage(
                   'https://via.placeholder.com/150'), // Gambar profil
             ),
@@ -68,7 +69,7 @@ class DashboardScreen extends StatelessWidget {
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 4,
-                      offset: Offset(0, 2), // Shadow position
+                      offset: const Offset(0, 2), // Shadow position
                     ),
                   ],
                 ),
@@ -97,10 +98,10 @@ class DashboardScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildReportCard("Stock", "150 Kg", Icons.inventory,
-                            Color(0xffd6e8f6)),
+                            const Color(0xffd6e8f6)),
                         _buildReportCard(
                             "Pesanan", "30 Pesanan", Icons.assignment_turned_in,
-                            Color(0xffe6e2f0)),
+                            const Color(0xffe6e2f0)),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -109,10 +110,10 @@ class DashboardScreen extends StatelessWidget {
                       children: [
                         _buildReportCard(
                             "Kekurangan Stok", "50 items", Icons.warning,
-                            Color(0xffd8e5eb)),
+                            const Color(0xffd8e5eb)),
                         _buildReportCard(
                             "Penghasilan", "\$410.61", Icons.attach_money,
-                            Color(0xffebeef5)),
+                            const Color(0xffebeef5)),
                       ],
                     ),
                   ],
@@ -120,42 +121,168 @@ class DashboardScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-              // Banner Promosi
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          "20% OFF",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+              Material(
+                elevation: 4, // Menambahkan elevasi dengan shadow
+                borderRadius: BorderRadius.circular(12), // Membuat sudut membulat pada elevasi
+                color: Colors.transparent, // Membuat background material transparan agar latar belakang Container yang tampil
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffe3f2f7), // Warna latar belakang
+                    borderRadius: BorderRadius.circular(12), // Membuat radius pada background
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Menampilkan informasi Pesanan atau Riwayat Order
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Latest Orders",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          "Select Your Favourite Plan",
-                          style: TextStyle(fontSize: 14, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(height: 4),
+                          // Menampilkan nama pelanggan
+                          Text(
+                            "${customerData['name'] ?? 'Unknown'}",
+                            style: const TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat', fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 0),
+                          // Menampilkan semua ikan yang dibeli dalam format "ikan lele, ikan nila"
+                          if (orderList.isNotEmpty)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Pesanan :",
+                                  style: TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat', fontWeight: FontWeight.w600),
+                                ),
+                                Row(
+                                  children: [
+                                    for (int i = 0; i < orderList.length ~/ 2; i++)
+                                      Padding(
+                                        padding: const EdgeInsets.only(right: 8.0),
+                                        child: Text(
+                                          orderList[i]['fish'] ?? 'Unknown Fish',
+                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat',),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    for (int i = orderList.length ~/ 2; i < orderList.length; i++)
+                                      Padding(
+                                        padding: const EdgeInsets.only(right: 8.0),
+                                        child: Text(
+                                          orderList[i]['fish'] ?? 'Unknown Fish',
+                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat',),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          else
+                            const Text(
+                              "No orders yet",
+                              style: TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat',),
+                            ),
+                          const SizedBox(height: 8),
+                          // Menampilkan status pengiriman dan pembayaran untuk pesanan pertama
+                          if (orderList.isNotEmpty)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Status Pengiriman
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: _getShipmentStatusColor(orderList.first['shipmentStatus']).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    orderList.first['shipmentStatus'] ?? 'Unknown',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: _getShipmentStatusColor(orderList.first['shipmentStatus']),
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Status Pembayaran
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: _getPaymentStatusColor(orderList.first['paymentStatus']).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    orderList.first['paymentStatus'] ?? 'Unknown',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: _getPaymentStatusColor(orderList.first['paymentStatus']),
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                      // Navigasi ke OrderHistoryScreen
+                      IconButton(
+                        icon: const Icon(Icons.history, color: Colors.blue),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const OrderHistoryScreen(
+                                customerData: customerData,
+                                orderList: orderList,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              )
             ],
           ),
         ),
       ),
     );
+  }
+
+  Color _getShipmentStatusColor(String? status) {
+    if (status == 'Shipped') {
+      return Colors.green;  // Warna hijau untuk status "Shipped"
+    } else if (status == 'Pending') {
+      return Colors.orange;  // Warna orange untuk status "Pending"
+    } else {
+      return Colors.grey;  // Warna abu-abu untuk status lainnya (misalnya "Unknown")
+    }
+  }
+
+  Color _getPaymentStatusColor(String? status) {
+    if (status == 'Paid') {
+      return Colors.green;  // Warna hijau untuk status "Paid"
+    } else if (status == 'Belum Lunas') {
+      return Color(0xffc70000);  // Warna merah untuk status "Unpaid"
+    } else {
+      return Colors.grey;  // Warna abu-abu untuk status lainnya (misalnya "Unknown")
+    }
   }
 
   Widget _buildDrawer(BuildContext context) {
@@ -172,7 +299,7 @@ class DashboardScreen extends StatelessWidget {
                   fontSize: 16),
             ),
             accountEmail: const Text(
-              "istiak@gmail.com",
+              "rifqu@gmail.com",
               style: TextStyle(fontWeight: FontWeight.w400,
                   color: Colors.black,
                   fontSize: 16),
@@ -210,8 +337,32 @@ class DashboardScreen extends StatelessWidget {
                       );
                     } else if (_menuItems[index]['title'] == "Produk") {
                       // Navigasi ke Produk Screen
-                    } else if (_menuItems[index]['title'] == "Peoples") {
-                      // Navigasi ke Peoples Screen
+                    } else if (_menuItems[index]['title'] == "Order History") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const OrderHistoryScreen(
+                            customerData: customerData,
+                            orderList: orderList,
+                          ),
+                        ),
+                      );
+                    }else if (_menuItems[index]['title'] == "Report") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ReportScreen(
+                          ),
+                        ),
+                      );
+                    }else if (_menuItems[index]['title'] == "Stok") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const StockManagementScreen(
+                          ),
+                        ),
+                      );
                     }
                     // Tambahkan kondisi lain sesuai kebutuhan
                   },
@@ -219,8 +370,6 @@ class DashboardScreen extends StatelessWidget {
               },
             ),
           ),
-
-          // Log Out Item
           _buildDrawerItem(
             context: context,
             icon: Icons.logout,
@@ -233,7 +382,6 @@ class DashboardScreen extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _buildDrawerItem({
     required BuildContext context,
@@ -300,10 +448,8 @@ class DashboardScreen extends StatelessWidget {
   {"title": "Produk", "icon": Icons.production_quantity_limits, "color": Colors.teal.shade300},
   {"title": "Transaksi", "icon": Icons.monetization_on_outlined, "color": Colors.green.shade300},
   {"title": "Order", "icon": Icons.sell, "color": Colors.red.shade300},
-  {"title": "Purchase", "icon": Icons.shopping_bag, "color": Colors.purple.shade300},
-  {"title": "Expense", "icon": Icons.money_off, "color": Colors.amber.shade300},
-  {"title": "Manage", "icon": Icons.settings, "color": Colors.brown.shade300},
+  {"title": "Order History", "icon": Icons.shopping_bag, "color": Colors.purple.shade300},
   {"title": "Report", "icon": Icons.bar_chart, "color": Colors.blueGrey.shade300},
-  {"title": "Warehouse", "icon": Icons.warehouse, "color": Colors.cyan.shade300},
+  {"title": "Stok", "icon": Icons.warehouse, "color": Colors.cyan.shade300},
   {"title": "Peoples", "icon": Icons.people, "color": Colors.deepPurple.shade300},
 ];

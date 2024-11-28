@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'confirmationScreen.dart';
 
 class TransactionScreen extends StatefulWidget {
@@ -11,9 +10,9 @@ class TransactionScreen extends StatefulWidget {
 
 class _TransactionScreenState extends State<TransactionScreen> {
   final List<Map<String, String>> _customers = [
-    {"name": "Customer 1", "phone": "08123456789", "address": "Jl. ABC No. 1"},
-    {"name": "Customer 2", "phone": "08198765432", "address": "Jl. DEF No. 2"},
-    {"name": "Customer 3", "phone": "08122334455", "address": "Jl. GHI No. 3"},
+    {"name": "Customer 1", "phone": "08123456789", "address": "Jl. Graha Alam Raya Bandung  No. 1"},
+    {"name": "Customer 2", "phone": "08198765432", "address": "Jl. Graha Alam Raya Bandung No. 2"},
+    {"name": "Customer 3", "phone": "08122334455", "address": "Jl. Graha Alam Raya Bandung No. 3"},
   ];
   Map<String, String>? _selectedCustomer;
 
@@ -21,6 +20,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   String? _selectedFishVariant;
   String? _selectedFishCount;
   String? _quantity;
+  String? _price;
 
   final List<String> _fishes = ["Ikan Nila", "Ikan Lele", "Ikan Mas"];
   final Map<String, List<String>> _fishVariants = {
@@ -37,7 +37,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
     "1 kg 6 ekor",
   ];
 
-  List<Map<String, String>> _orderList = [];
+  final List<Map<String, String>> _orderList = [];
 
   @override
   Widget build(BuildContext context) {
@@ -70,48 +70,59 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     _selectedCustomer = value;
                   });
                 }
-                    : null, // Nonaktifkan dropdown jika ada pesanan
+                    : null,
                 itemLabel: (item) => item['name']!,
-                isEnabled: _orderList.isEmpty, // Hanya aktif jika belum ada pesanan
+                isEnabled: _orderList.isEmpty,
               ),
               if (_selectedCustomer != null) ...[
                 const SizedBox(height: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Kolom Telepon
                     Container(
                       margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Mengurangi padding horizontal
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.grey,
+                          color: Colors.black54,
                           width: 1,
                         ),
                       ),
-                      child: Text(
-                        "${_selectedCustomer!['phone']}",
-                        style: const TextStyle(fontSize: 16),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "${_selectedCustomer!['phone']}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
                       ),
                     ),
-
-                    // Kolom Alamat
                     Container(
                       margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Mengurangi padding horizontal
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.grey,
+                          color: Colors.black54,
                           width: 1,
                         ),
                       ),
-                      child: Text(
-                        "${_selectedCustomer!['address']}",
-                        style: const TextStyle(fontSize: 16),
+                      child: Align(
+                        alignment: Alignment.centerLeft, // Menjaga teks tetap di kiri
+                        child: Text(
+                          "${_selectedCustomer!['address']}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -171,23 +182,53 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   ),
                 ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_selectedCustomer != null &&
-                      _selectedFish != null &&
-                      _selectedFishVariant != null &&
-                      _selectedFishCount != null &&
-                      _quantity != null) {
-                    _addOrder();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Mohon lengkapi semua data!"),
-                      ),
-                    );
-                  }
-                },
-                child: const Text("Tambah Pesanan"),
+              if (_quantity != null)
+                TextField(
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    setState(() {
+                      _price = value;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: "Harga (per kg)",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              const SizedBox(height: 15),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_selectedCustomer != null &&
+                        _selectedFish != null &&
+                        _selectedFishVariant != null &&
+                        _selectedFishCount != null &&
+                        _quantity != null) {
+                      _addOrder();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Mohon lengkapi semua data!"),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Montserrat',
+                    ),
+                  ),
+                  child: const Text("Tambah Pesanan"),
+                ),
               ),
               const SizedBox(height: 20),
               const Text(
@@ -199,7 +240,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
               ElevatedButton(
                 onPressed: () {
                   if (_orderList.isNotEmpty && _selectedCustomer != null) {
-                    // Navigasi ke halaman konfirmasi dan kirim data pelanggan serta daftar pesanan
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -217,9 +257,21 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     );
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal, // Warna latar belakang tombol
+                  padding: const EdgeInsets.symmetric(vertical: 16.0), // Padding vertikal
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0), // Sudut tombol melengkung
+                  ),
+                  foregroundColor: Colors.white, // Warna teks tombol
+                  textStyle: const TextStyle(
+                    fontSize: 18, // Ukuran font
+                    fontWeight: FontWeight.bold, // Berat font
+                    fontFamily: 'Montserrat', // Menetapkan font keluarga
+                  ),
+                ),
                 child: const Text("Checkout Transaksi"),
-              ),
-
+              )
             ],
           ),
         ),
@@ -281,11 +333,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
         'variant': _selectedFishVariant!,
         'weight': _selectedFishCount!,
         'quantity': _quantity!,
+        'price': _price ?? "0", // Menyimpan harga jika diisi
       });
       _selectedFish = null;
       _selectedFishVariant = null;
       _selectedFishCount = null;
       _quantity = null;
+      _price = null; // Reset harga setelah menambah pesanan
     });
   }
 
