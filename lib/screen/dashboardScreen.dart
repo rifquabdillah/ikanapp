@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ikanapps/screen/detailOrder.dart';
 import 'package:ikanapps/screen/orderHistory.dart';
-import 'transactionScreen.dart';
+import 'orderScreen.dart';
 import 'stockManagementScreen.dart';
 import 'reportScreen.dart';
 
