@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ikanapps/screen/detailOrder.dart';
 import 'package:ikanapps/screen/orderHistory.dart';
 import 'package:ikanapps/screen/pembelian.dart';
 import 'orderScreen.dart';

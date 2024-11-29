@@ -43,7 +43,7 @@ class _PembelianScreenState extends State<PembelianScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: Color(0xFFd9e6ec),
         title: const Text("Pembelian Ikan"),
         centerTitle: true,
         elevation: 5,
@@ -215,12 +215,12 @@ class _PembelianScreenState extends State<PembelianScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
+                    backgroundColor: Color(0xFFd9e6ec),
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
-                    foregroundColor: Colors.white,
+                    foregroundColor: Colors.black45,
                     textStyle: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -258,12 +258,12 @@ class _PembelianScreenState extends State<PembelianScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal, // Warna latar belakang tombol
+                  backgroundColor: Color(0xFFd9e6ec), // Warna latar belakang tombol
                   padding: const EdgeInsets.symmetric(vertical: 16.0), // Padding vertikal
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0), // Sudut tombol melengkung
                   ),
-                  foregroundColor: Colors.white, // Warna teks tombol
+                  foregroundColor: Colors.black45, // Warna teks tombol
                   textStyle: const TextStyle(
                     fontSize: 18, // Ukuran font
                     fontWeight: FontWeight.bold, // Berat font

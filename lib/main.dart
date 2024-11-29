@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';// Impor StockProvider
 import 'package:ikanapps/provider/StockProvider.dart';
 import 'package:ikanapps/model/Stock.dart';
 import 'package:ikanapps/screen/dashboardScreen.dart';
+import 'package:ikanapps/screen/login.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Montserrat',
           primarySwatch: Colors.blue,
         ),
-        home: const DashboardScreen(),
+        home: LoginScreen(),
       ),
     );
   }
