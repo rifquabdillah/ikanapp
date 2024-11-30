@@ -62,13 +62,17 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/menjala-rct-normal-txt.png
+    - assets/menjala-rct-normal.png
   fonts:
     - family: Montserrat
       fonts:
         - asset: assets/fonts/Montserrat-Regular.ttf
         - asset: assets/fonts/Montserrat-Bold.ttf
+        - asset: assets/fonts/CooperMdBTMedium.ttf
           weight: 700
+    - family: Montserrat
+      fonts:
+            - asset: assets/fonts/CooperMdBTMedium.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

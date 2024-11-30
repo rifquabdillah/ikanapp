@@ -29,13 +29,13 @@ class DashboardScreen extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Montserrat',
+                    fontFamily: 'CooperMdBT',
                     fontSize: 20,
                   ),
                 ),
                 Text(
                   "Admin",
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  style: TextStyle(color: Colors.grey, fontSize: 12,fontFamily: 'CooperMdBT',),
                 ),
               ],
             ),
@@ -83,6 +83,7 @@ class DashboardScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            fontFamily: 'CooperMdBT',
                           ),
                         ),
                         TextButton(
@@ -296,13 +297,15 @@ class DashboardScreen extends StatelessWidget {
               "Admin",
               style: TextStyle(fontWeight: FontWeight.w500,
                   color: Colors.black,
-                  fontSize: 16),
+                  fontSize: 16,
+                fontFamily: 'CooperMdBT',),
             ),
             accountEmail: const Text(
               "rifqu@gmail.com",
               style: TextStyle(fontWeight: FontWeight.w400,
                   color: Colors.black,
-                  fontSize: 16),
+                  fontSize: 16,
+                fontFamily: 'CooperMdBT',),
             ),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
