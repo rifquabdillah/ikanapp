@@ -237,41 +237,44 @@ class _PembelianScreenState extends State<PembelianScreen> {
               ),
               const SizedBox(height: 10),
               _buildOrderTable(),
-              ElevatedButton(
-                onPressed: () {
-                  if (_orderList.isNotEmpty && _selectedCustomer != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ConfirmationScreen(
-                          customerData: _selectedCustomer!,
-                          orderList: _orderList,
+              const SizedBox(height: 10),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_orderList.isNotEmpty && _selectedCustomer != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ConfirmationScreen(
+                            customerData: _selectedCustomer!,
+                            orderList: _orderList,
+                          ),
                         ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Pastikan ada pesanan dan customer terpilih!"),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFd9e6ec), // Warna latar belakang tombol
-                  padding: const EdgeInsets.symmetric(vertical: 16.0), // Padding vertikal
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0), // Sudut tombol melengkung
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Pastikan ada pesanan dan customer terpilih!"),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFd9e6ec), // Warna latar belakang tombol
+                    padding: const EdgeInsets.symmetric(vertical: 16.0), // Padding vertikal
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0), // Sudut tombol melengkung
+                    ),
+                    foregroundColor: Colors.black45, // Warna teks tombol
+                    textStyle: const TextStyle(
+                      fontSize: 15, // Ukuran font
+                      fontWeight: FontWeight.bold, // Berat font
+                      fontFamily: 'Montserrat', // Menetapkan font keluarga
+                    ),
                   ),
-                  foregroundColor: Colors.black45, // Warna teks tombol
-                  textStyle: const TextStyle(
-                    fontSize: 18, // Ukuran font
-                    fontWeight: FontWeight.bold, // Berat font
-                    fontFamily: 'Montserrat', // Menetapkan font keluarga
-                  ),
+                  child: const Text("Checkout Transaksi"),
                 ),
-                child: const Text("Checkout Transaksi"),
-              )
+              ),
             ],
           ),
         ),

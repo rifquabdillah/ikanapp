@@ -10,9 +10,9 @@ class DashboardScreen extends StatelessWidget {
 
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFd9e6ec),
+      backgroundColor: const Color(0xFFe9f0f8),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF2464a2),
         elevation: 0,
         title: Row(
           children: [
@@ -291,7 +291,7 @@ class DashboardScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: Color(0xFFd9e6ec)),
+            decoration: const BoxDecoration(color: Color(0xFF2365a2)),
             accountName: const Text(
               "Admin",
               style: TextStyle(fontWeight: FontWeight.w500,

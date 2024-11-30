@@ -15,7 +15,7 @@ class LoginScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset('assets/logo.png', height: 100), // Your app logo
+              Image.asset('assets/ikan.png', height: 150), // Your app logo
               SizedBox(height: 30),
               TextField(
                 controller: usernameController,
@@ -53,6 +53,7 @@ class LoginScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white
                 ),
               ),
               SizedBox(height: 20),

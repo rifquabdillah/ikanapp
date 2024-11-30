@@ -19,7 +19,7 @@ class RegisterScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset('assets/logo.png', height: 100), // Your app logo
+              Image.asset('assets/ikan.png', height: 100), // Your app logo
               SizedBox(height: 15),
 
               // Nama Field
@@ -143,6 +143,7 @@ class RegisterScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white
                 ),
               ),
               SizedBox(height: 20),
