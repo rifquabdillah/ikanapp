@@ -36,6 +36,10 @@ class HttpRequest(private val context: Context) {
         val isRegister: String
     )
 
+    data class StokResponse(
+        val isStok: String
+    )
+
     fun login(
         username: String, // <- parameter username
         password: String, // <- parameter password
@@ -68,25 +72,21 @@ class HttpRequest(private val context: Context) {
         })
     }
 
-    fun register(
-        nama: String,
-        telepon: String,
-        alamat: String,
-        email: String,
-        username: String, // <- parameter username
-        password: String, // <- parameter password
+    fun getStok(
+        nama: nama, // <- parameter username
+        harga: harga, // <- parameter password
         callback: (String) -> Unit // <- parameter callback. naha callback: (String) karena struktur data nu dipake LoginResponse bakal nga return tipe data string. tingali contoh na di white label
     ) {
-        val call = apiRoutes.getRegister(nama,telepon,alamat,email, username, password)
-        call.enqueue(object : retrofit2.Callback<RegisterResponse> {
+        val call = apiRoutes.getStok(nama, harga)
+        call.enqueue(object : retrofit2.Callback<StokResponse> {
             override fun onResponse(
-                call: Call<RegisterResponse>,
-                response: Response<RegisterResponse>
+                call: Call<StokResponse>,
+                response: Response<StokResponse>
             ) {
                 if (response.isSuccessful) { // <- respon sukses
-                    response.body()?.let { registerResponse ->
-                        Log.d("HttpRequest", "Register status: ${registerResponse.isRegister}")
-                        callback(registerResponse.isLogin) // pass respon api ka callback
+                    response.body()?.let { stokResponse ->
+                        Log.d("HttpRequest", "Stok status: ${stokResponse.isStok}")
+                        callback(stokResponse.isLogin) // pass respon api ka callback
                     } ?: run {
                         Log.w("HttpRequest", "Empty response body.")
                         callback("Error: Empty response body") // handle mun api teu nga return data
@@ -103,4 +103,6 @@ class HttpRequest(private val context: Context) {
             }
         })
     }
+
+
 }

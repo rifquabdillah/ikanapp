@@ -154,7 +154,7 @@ class RegisterScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pop(context); // Go back to Login screen
                   },
-                  child: Text('Already have an account? Login'),
+                  child: Text('Sudah punya akun? Masuk'),
                 ),
               ],
             ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'confirmationScreen.dart';
 import 'package:ikanapps/provider/StockProvider.dart';
@@ -13,10 +15,23 @@ class TransactionScreen extends StatefulWidget {
 
 class _TransactionScreenState extends State<TransactionScreen> {
   final List<Map<String, String>> _customers = [
-    {"name": "Customer 1", "phone": "08123456789", "address": "Jl. Graha Alam Raya Bandung  No. 1"},
-    {"name": "Customer 2", "phone": "08198765432", "address": "Jl. Graha Alam Raya Bandung No. 2"},
-    {"name": "Customer 3", "phone": "08122334455", "address": "Jl. Graha Alam Raya Bandung No. 3"},
+    {
+      "name": "Customer 1",
+      "phone": "08123456789",
+      "address": "Jl. Graha Alam Raya Bandung  No. 1"
+    },
+    {
+      "name": "Customer 2",
+      "phone": "08198765432",
+      "address": "Jl. Graha Alam Raya Bandung No. 2"
+    },
+    {
+      "name": "Customer 3",
+      "phone": "08122334455",
+      "address": "Jl. Graha Alam Raya Bandung No. 3"
+    },
   ];
+
   Map<String, String>? _selectedCustomer;
 
   String? _selectedFish;
@@ -82,6 +97,11 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 _buildCustomerInfo("Phone", _selectedCustomer!['phone']!),
                 _buildCustomerInfo("Address", _selectedCustomer!['address']!),
               ],
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => _showAddCustomerBottomSheet(context),
+                child: const Text("Tambah Customer Baru"),
+              ),
               const SizedBox(height: 20),
               DropdownField<String>(
                 value: _selectedFish,
@@ -180,8 +200,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black54),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+        boxShadow: [
+          const BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Text(
         "$label: $value",
@@ -196,7 +223,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(color: Colors.black54),
         border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16, vertical: 14),
       ),
     );
   }
@@ -206,7 +236,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
       backgroundColor: const Color(0xFF2464a2),
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      foregroundColor: Color(0xffd3e0ec),
+      foregroundColor: const Color(0xffd3e0ec),
       textStyle: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
@@ -249,79 +279,197 @@ class _TransactionScreenState extends State<TransactionScreen> {
     _price = null;
   }
 
-  void _processTransaction() {
-    final stockProvider = Provider.of<StockProvider>(context, listen: false);
-    for (var order in _orderList) {
-      final fishName = order['fish']!;
-      final quantity = int.tryParse(order['quantity']!) ?? 0;
-      stockProvider.reduceStock(fishName, quantity);
+  void _processTransaction() async {
+    if (_canCheckout()) {
+      // Mengumpulkan data pesanan
+      final Map<String, dynamic> orderData = {
+        'customer': _selectedCustomer!['name']!,
+        'fish': _orderList.map((order) => order['fish']).toList(),
+        'variant': _orderList.map((order) => order['variant']).toList(),
+        'weight': _orderList.map((order) => order['weight']).toList(),
+        'quantity': _orderList.map((order) => order['quantity']).toList(),
+        'price': _orderList.map((order) => order['price']).toList(),
+      };
+
+      try {
+        // Mengirim data ke API
+        final response = await http.post(
+          Uri.parse('http://103.139.244.148:5002/'),  // Ganti dengan URL API Anda
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: json.encode(orderData),
+        );
+
+        if (response.statusCode == 200) {
+          // Berhasil mengirim data
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Transaksi selesai!")),
+          );
+          setState(() {
+            _orderList.clear();
+            _selectedCustomer = null;
+          });
+        } else {
+          // Jika terjadi error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Gagal mengirim transaksi. Error: ${response.statusCode}")),
+          );
+        }
+      } catch (e) {
+        // Menangani error jika terjadi masalah jaringan atau lainnya
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Terjadi kesalahan: $e")),
+        );
+      }
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Transaksi selesai!")),
-    );
-    setState(() {
-      _orderList.clear();
-      _selectedCustomer = null;
-    });
   }
+
 
   Widget _buildOrderTable() {
     if (_orderList.isEmpty) {
       return const Center(child: Text("Belum ada pesanan."));
     }
 
-    return Column(
-      children: _orderList.map((order) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: _orderList.length,
+      itemBuilder: (context, index) {
+        final order = _orderList[index];
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 5),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: ListTile(
-            title: Text(order['fish']!),
-            subtitle: Text("Varian: ${order['variant']} - Jumlah: ${order['quantity']}"),
+            contentPadding: const EdgeInsets.all(12),
+            title: Text("${order['fish']} - ${order['variant']}"),
+            subtitle: Text("Jumlah: ${order['quantity']}"),
             trailing: Text("Bobot: ${order['weight']}"),
           ),
         );
-      }).toList(),
+      },
+    );
+  }
+
+  void _showAddCustomerBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              const BoxShadow(
+                color: Colors.black12,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTextFieldWithBottomBorder("Nama", (value) {}),
+              _buildTextFieldWithBottomBorder("Nomor Telepon", (value) {}),
+              _buildTextFieldWithBottomBorder("Alamat", (value) {}),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _customers.add({
+                      'name': 'Customer Baru',
+                      'phone': '0800000000',
+                      'address': 'Alamat Baru',
+                    });
+                  });
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2464a2), // Warna tombol
+                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0), // Padding vertikal untuk membuat tombol lebih tinggi
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)), // Membuat sudut tombol melengkung
+                  foregroundColor: Colors.white, // Warna teks tombol
+                  textStyle: const TextStyle(
+                    fontSize: 16, // Ukuran font
+                    fontWeight: FontWeight.bold, // Tebal font
+                    fontFamily: 'Montserrat', // Gaya font
+                  ),
+                ),
+                child: const Text("Simpan"),
+              )
+
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTextFieldWithBottomBorder(String label,
+      ValueChanged<String> onChanged) {
+    return TextField(
+      keyboardType: TextInputType.number,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.black54),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16, vertical: 14),
+        border: InputBorder.none,
+        // Menghilangkan border default
+        enabledBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.black54, width: 1.0), // Border bawah
+        ),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(
+              color: Colors.blue, width: 1.0), // Border bawah saat fokus
+        ),
+      ),
     );
   }
 }
 
-class DropdownField<T> extends StatelessWidget {
+  class DropdownField<T> extends StatelessWidget {
   final T? value;
   final List<T> items;
   final String label;
-  final bool isEnabled;
   final ValueChanged<T?>? onChanged;
+  final bool isEnabled;
   final String Function(T) itemLabel;
 
   const DropdownField({
+    Key? key,
     required this.value,
     required this.items,
     required this.label,
-    this.onChanged,
     required this.itemLabel,
+    required this.onChanged,
     this.isEnabled = true,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return InputDecorator(
+    return DropdownButtonFormField<T>(
+      value: value,
+      onChanged: isEnabled ? onChanged : null,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(color: Colors.black54),
         border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
-      child: DropdownButton<T>(
-        isExpanded: true,
-        value: value,
-        items: items
-            .map((item) => DropdownMenuItem<T>(
+      items: items.map((item) {
+        return DropdownMenuItem<T>(
           value: item,
           child: Text(itemLabel(item)),
-        ))
-            .toList(),
-        onChanged: isEnabled ? onChanged : null,
-        underline: const SizedBox(),
-        isDense: true,
-      ),
+        );
+      }).toList(),
     );
   }
 }

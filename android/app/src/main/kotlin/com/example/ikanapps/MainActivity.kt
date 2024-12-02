@@ -9,6 +9,7 @@ import com.example.ikanapps.HttpRequest
 class MainActivity : FlutterActivity() {
     private val httpRequest = HttpRequest(this)
     private val AKUN_CHANNEL = "com.example.ikanapps/akun_channel"
+    private val STOK_CHANNEL = "com.example.ikanapps/stok_channel"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -16,38 +17,40 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AKUN_CHANNEL)
             .setMethodCallHandler { call, result ->
 
-                val username = call.argument<String>("username")
-                val password = call.argument<String>("password")
-                val nama = call.argument<String>("nama")
-                val telepon = call.argument<String>("telepon")
-                val alamat = call.argument<String>("alamat")// Untuk register
-                val email = call.argument<String>("email")
+                // Mendapatkan parameter username dan password
+                val username = call.argument<String>("username") // mendapatkan username
+                val password = call.argument<String>("password") // mendapatkan password
 
+                // Cek apakah username dan password tidak null
                 if (username != null && password != null) {
                     when (call.method) {
-                        "fetchProducts" -> { // Login method
-                            // Memanggil fungsi login
+                        "fetchProducts" -> { // Nama metode yang dipanggil dari Flutter
                             httpRequest.login(username, password) { response ->
-                                result.success(response) // Mengirimkan response login ke Flutter
+                                result.success(response) // Mengirimkan response ke Flutter
                             }
                         }
-                        "fetchRegister" -> { // Register method
-                            // Memastikan email ada untuk register
-                            if (username != null && password != null && nama != null && telepon != null && alamat != null && email != null) {
-                                httpRequest.register(username, password, nama, telepon, alamat, email) { response ->
-                                    result.success(response) // Mengirimkan response register ke Flutter
-                                }
-                            } else {
-                                result.error("INVALID_PARAMETERS", "Email is required for registration", null)
-                            }
-                        }
-                        else -> result.notImplemented() // Jika metode tidak dikenali
+                        else -> result.notImplemented() // Jika method tidak dikenali
                     }
                 } else {
-                    result.error("INVALID_PARAMETERS", "Username or password is null", null) // Jika parameter kosong
+                    result.error("INVALID_PARAMETERS", "Username or password is null", null) // Menangani jika parameter null
+                }
+            }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, STOK_CHANNEL)
+            .setMethodCallHandler { call, result ->
+
+                val nama = call.argument<String>("nama")
+                val harga = call.argument<String>("harga")
+
+                Log.e("STOK_CHANNEL", "Received Jenis Ikan: $nama, harga: $harga")
+
+                when (call.method) {
+                    "fetchStok" -> {
+                        httpRequest.getStok(nama!!, harga!!) { response ->
+                            result.success(response)
+                        }
+                    } else -> result.notImplemented()
                 }
             }
     }
-}
-
 }

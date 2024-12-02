@@ -280,7 +280,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (status == 'Paid') {
       return Colors.green;
     } else if (status == 'Belum Lunas') {
-      return Color(0xffc70000);
+      return const Color(0xffc70000);
     } else {
       return Colors.grey;
     }
@@ -321,16 +321,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text("Dashboard", style: TextStyle(fontFamily: 'CooperMdBT')),
-            onTap: () {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => DashboardScreen(username: widget.username)));
-            },
-          ),
-          ListTile(
             leading: const Icon(Icons.inventory),
             title: const Text("Stock Management", style: TextStyle(fontFamily: 'CooperMdBT')),
             onTap: () {
@@ -340,15 +330,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
             },
           ),
-          ListTile(
+          // Menggunakan ExpansionTile untuk Order
+          ExpansionTile(
             leading: const Icon(Icons.shopping_cart),
             title: const Text("Order", style: TextStyle(fontFamily: 'CooperMdBT')),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TransactionScreen()),
-              );
-            },
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.add_shopping_cart),
+                title: const Text('Order'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TransactionScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Penerimaan Order'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OrderHistoryScreen(
+                        customerData: customerData,
+                        orderList: orderList,
+                      ),
+                    ),
+                  );
+                  // Tidak perlu memanggil Navigator.pop(context) di sini.
+                },
+              ),
+
+            ],
           ),
           ListTile(
             leading: const Icon(Icons.receipt_long),
