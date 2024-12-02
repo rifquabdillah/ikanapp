@@ -46,7 +46,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFd9e6ec),
+        backgroundColor: const Color(0xFF205a92),
         title: const Text("Orderan Ikan"),
         centerTitle: true,
         elevation: 5,
@@ -203,10 +203,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFFd9e6ec),
+      backgroundColor: const Color(0xFF2464a2),
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      foregroundColor: Colors.black45,
+      foregroundColor: Color(0xffd3e0ec),
       textStyle: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,

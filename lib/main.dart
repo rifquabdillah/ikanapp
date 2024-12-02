@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => StockProvider()), // Daftarkan StockProvider
+        ChangeNotifierProvider(create: (_) => StockProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Montserrat',
           primarySwatch: Colors.blue,
         ),
-        home:  SplashScreen(),
+        home:  LoginScreen(),
       ),
     );
   }

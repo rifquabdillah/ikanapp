@@ -4,15 +4,25 @@ import 'package:ikanapps/screen/pembelian.dart';
 import 'orderScreen.dart';
 import 'stockManagementScreen.dart';
 import 'reportScreen.dart';
+import 'package:ikanapps/backend/nativeChannel.dart';
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
 
+class DashboardScreen extends StatefulWidget {
+  final String username;  // Username passed from the login screen
+
+  const DashboardScreen({Key? key, required this.username}) : super(key: key);
+
+  @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFe9f0f8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2464a2),
+        backgroundColor: const Color(0xFF1d5082),
         elevation: 0,
         title: Row(
           children: [
@@ -21,21 +31,21 @@ class DashboardScreen extends StatelessWidget {
                   'https://via.placeholder.com/150'), // Gambar profil
             ),
             const SizedBox(width: 10),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Rifqu",
-                  style: TextStyle(
-                    color: Colors.black,
+                  widget.username.isNotEmpty ? widget.username : "Username Not Available",
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'CooperMdBT',
                     fontSize: 20,
                   ),
                 ),
-                Text(
+                const Text(
                   "Admin",
-                  style: TextStyle(color: Colors.grey, fontSize: 12,fontFamily: 'CooperMdBT',),
+                  style: TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'CooperMdBT'),
                 ),
               ],
             ),
@@ -50,7 +60,7 @@ class DashboardScreen extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.black), // Warna ikon menu
       ),
-      drawer: _buildDrawer(context), // Tambahkan Drawer di sini
+      drawer: _buildDrawer(context), // Drawer
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -61,7 +71,6 @@ class DashboardScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 16),
-                // Margin bawah untuk pemisahan
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -69,7 +78,7 @@ class DashboardScreen extends StatelessWidget {
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 4,
-                      offset: const Offset(0, 2), // Shadow position
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -94,7 +103,6 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // Menambahkan section report ke dalam Container yang sama
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -120,22 +128,20 @@ class DashboardScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
               Material(
-                elevation: 4, // Menambahkan elevasi dengan shadow
-                borderRadius: BorderRadius.circular(12), // Membuat sudut membulat pada elevasi
-                color: Colors.transparent, // Membuat background material transparan agar latar belakang Container yang tampil
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.transparent,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xffe3f2f7), // Warna latar belakang
-                    borderRadius: BorderRadius.circular(12), // Membuat radius pada background
+                    color: const Color(0xffe3f2f7),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Menampilkan informasi Pesanan atau Riwayat Order
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -148,13 +154,11 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          // Menampilkan nama pelanggan
                           Text(
                             "${customerData['name'] ?? 'Unknown'}",
                             style: const TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat', fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 0),
-                          // Menampilkan semua ikan yang dibeli dalam format "ikan lele, ikan nila"
                           if (orderList.isNotEmpty)
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +174,7 @@ class DashboardScreen extends StatelessWidget {
                                         padding: const EdgeInsets.only(right: 8.0),
                                         child: Text(
                                           orderList[i]['fish'] ?? 'Unknown Fish',
-                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat',),
+                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat'),
                                         ),
                                       ),
                                   ],
@@ -183,7 +187,7 @@ class DashboardScreen extends StatelessWidget {
                                         padding: const EdgeInsets.only(right: 8.0),
                                         child: Text(
                                           orderList[i]['fish'] ?? 'Unknown Fish',
-                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat',),
+                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat'),
                                         ),
                                       ),
                                   ],
@@ -193,15 +197,13 @@ class DashboardScreen extends StatelessWidget {
                           else
                             const Text(
                               "No orders yet",
-                              style: TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat',),
+                              style: TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat'),
                             ),
                           const SizedBox(height: 8),
-                          // Menampilkan status pengiriman dan pembayaran untuk pesanan pertama
                           if (orderList.isNotEmpty)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Status Pengiriman
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
@@ -219,7 +221,6 @@ class DashboardScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                // Status Pembayaran
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
@@ -240,7 +241,6 @@ class DashboardScreen extends StatelessWidget {
                             ),
                         ],
                       ),
-                      // Navigasi ke OrderHistoryScreen
                       IconButton(
                         icon: const Icon(Icons.history, color: Colors.blue),
                         onPressed: () {
@@ -268,21 +268,21 @@ class DashboardScreen extends StatelessWidget {
 
   Color _getShipmentStatusColor(String? status) {
     if (status == 'Shipped') {
-      return Colors.green;  // Warna hijau untuk status "Shipped"
+      return Colors.green;
     } else if (status == 'Pending') {
-      return Colors.orange;  // Warna orange untuk status "Pending"
+      return Colors.orange;
     } else {
-      return Colors.grey;  // Warna abu-abu untuk status lainnya (misalnya "Unknown")
+      return Colors.grey;
     }
   }
 
   Color _getPaymentStatusColor(String? status) {
     if (status == 'Paid') {
-      return Colors.green;  // Warna hijau untuk status "Paid"
+      return Colors.green;
     } else if (status == 'Belum Lunas') {
-      return Color(0xffc70000);  // Warna merah untuk status "Unpaid"
+      return Color(0xffc70000);
     } else {
-      return Colors.grey;  // Warna abu-abu untuk status lainnya (misalnya "Unknown")
+      return Colors.grey;
     }
   }
 
@@ -293,159 +293,117 @@ class DashboardScreen extends StatelessWidget {
         children: [
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: Color(0xFF2365a2)),
-            accountName: const Text(
-              "Admin",
-              style: TextStyle(fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                  fontSize: 16,
-                fontFamily: 'CooperMdBT',),
-            ),
-            accountEmail: const Text(
-              "rifqu@gmail.com",
-              style: TextStyle(fontWeight: FontWeight.w400,
-                  color: Colors.black,
-                  fontSize: 16,
-                fontFamily: 'CooperMdBT',),
-            ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: ClipOval(
-                child: Image.network(
-                  "https://via.placeholder.com/150", // Gambar profil
-                  fit: BoxFit.cover,
-                  width: 90,
-                  height: 90,
-                ),
+            accountName: Text(
+              widget.username.isNotEmpty ? widget.username : "Username Not Available", // Menampilkan username
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+                fontSize: 16,
+                fontFamily: 'CooperMdBT',
               ),
             ),
-          ),
-
-          // Menambahkan semua item menu ke dalam drawer
-          Expanded(
-            child: ListView.builder(
-              itemCount: _menuItems.length,
-              itemBuilder: (context, index) {
-                return _buildDrawerItem(
-                  context: context,
-                  icon: _menuItems[index]['icon'],
-                  title: _menuItems[index]['title'],
-                  onTap: () {
-                    if (_menuItems[index]['title'] == "Order") {
-                      // Navigasi ke TransactionScreen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const TransactionScreen(),
-                        ),
-                      );
-                    } else if (_menuItems[index]['title'] == "Pembelian") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PembelianScreen(
-                          ),
-                        ),
-                      );
-                    } else if (_menuItems[index]['title'] == "Order History") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const OrderHistoryScreen(
-                            customerData: customerData,
-                            orderList: orderList,
-                          ),
-                        ),
-                      );
-                    }else if (_menuItems[index]['title'] == "Report") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ReportScreen(
-                          ),
-                        ),
-                      );
-                    }else if (_menuItems[index]['title'] == "Stok") {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const StockManagementScreen(
-                          ),
-                        ),
-                      );
-                    }
-                    // Tambahkan kondisi lain sesuai kebutuhan
-                  },
-                );
-              },
+            accountEmail: const Text(
+              "admin@ikanapps.com",
+              style: TextStyle(fontWeight: FontWeight.w500, color: Colors.black54, fontFamily: 'CooperMdBT'),
             ),
+            currentAccountPicture: const CircleAvatar(
+              backgroundImage: NetworkImage("https://via.placeholder.com/150"),
+            ),
+            // Menambahkan tombol logout di kanan
+            otherAccountsPictures: [
+              IconButton(
+                icon: const Icon(Icons.exit_to_app, color: Colors.white),
+                onPressed: () {
+                  // Logic untuk logout, misalnya dengan memanggil fungsi logout
+                  _logout(context); // Ganti dengan logika logout sesuai kebutuhan
+                },
+              ),
+            ],
           ),
-          _buildDrawerItem(
-            context: context,
-            icon: Icons.logout,
-            title: "Log Out",
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text("Dashboard", style: TextStyle(fontFamily: 'CooperMdBT')),
             onTap: () {
-              // Aksi untuk Log Out
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => DashboardScreen(username: widget.username)));
             },
+          ),
+          ListTile(
+            leading: const Icon(Icons.inventory),
+            title: const Text("Stock Management", style: TextStyle(fontFamily: 'CooperMdBT')),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const StockManagementScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.shopping_cart),
+            title: const Text("Order", style: TextStyle(fontFamily: 'CooperMdBT')),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TransactionScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.receipt_long),
+            title: const Text("Pembelian", style: TextStyle(fontFamily: 'CooperMdBT')),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PembelianScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.report),
+            title: const Text("Report", style: TextStyle(fontFamily: 'CooperMdBT')),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ReportScreen()),
+              );
+            },
+          ),
+          // Menambahkan gambar di bagian bawah
+          const Spacer(), // Menggunakan Spacer untuk memberi ruang kosong di atas gambar
+          Padding(
+            padding: const EdgeInsets.only(right: 25.0),
+            child: Image.asset(
+              'assets/menjala-sq-normal.png', // Ganti dengan path gambar yang sesuai
+              height: 120, // Sesuaikan ukuran gambar
+              width: double.infinity, // Mengatur gambar untuk memenuhi lebar layar, // Sesuaikan gambar agar pas dengan lebar dan tinggi
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerItem({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.black54),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 16),
-      ),
-      onTap: onTap,
-    );
-  }
 
-  Widget _buildReportCard(String title, String amount, IconData icon,
-      Color color) {
+  Widget _buildReportCard(String title, String value, IconData icon, Color color) {
     return Container(
-      width: 150,
-      // Mengatur lebar tetap untuk semua kartu
-      height: 130,
-      // Mengatur tinggi tetap untuk semua kartu
       padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-      // Margin antar kartu
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 30, color: Colors.black54),
-          const SizedBox(height: 0),
+          Icon(icon, size: 40, color: Colors.white),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 0),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontSize: 14, // Menyamakan ukuran font
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black, fontSize: 14),
           ),
         ],
       ),
@@ -453,12 +411,8 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-  final List<Map<String, dynamic>> _menuItems = [
-  {"title": "Pembelian", "icon": Icons.production_quantity_limits, "color": Colors.teal.shade300},
-  {"title": "Transaksi", "icon": Icons.monetization_on_outlined, "color": Colors.green.shade300},
-  {"title": "Order", "icon": Icons.sell, "color": Colors.red.shade300},
-  {"title": "Order History", "icon": Icons.shopping_bag, "color": Colors.purple.shade300},
-  {"title": "Report", "icon": Icons.bar_chart, "color": Colors.blueGrey.shade300},
-  {"title": "Stok", "icon": Icons.warehouse, "color": Colors.cyan.shade300},
-  {"title": "Peoples", "icon": Icons.people, "color": Colors.deepPurple.shade300},
-];
+// Fungsi logout (contoh)
+void _logout(BuildContext context) {
+  // Implementasikan logika logout di sini, misalnya dengan menghapus session atau token
+  Navigator.pushReplacementNamed(context, '/login'); // Pindahkan ke halaman login setelah logout
+}

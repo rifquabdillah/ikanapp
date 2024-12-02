@@ -43,7 +43,7 @@ class _PembelianScreenState extends State<PembelianScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFd9e6ec),
+        backgroundColor: Color(0xFF6693be),
         title: const Text("Pembelian Ikan"),
         centerTitle: true,
         elevation: 5,
@@ -215,12 +215,12 @@ class _PembelianScreenState extends State<PembelianScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFd9e6ec),
+                    backgroundColor: Color(0xFF6693be),
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
-                    foregroundColor: Colors.black45,
+                    foregroundColor: Color(0xffe9f0f6),
                     textStyle: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -260,12 +260,12 @@ class _PembelianScreenState extends State<PembelianScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFd9e6ec), // Warna latar belakang tombol
+                    backgroundColor: Color(0xFF6693be), // Warna latar belakang tombol
                     padding: const EdgeInsets.symmetric(vertical: 16.0), // Padding vertikal
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0), // Sudut tombol melengkung
                     ),
-                    foregroundColor: Colors.black45, // Warna teks tombol
+                    foregroundColor: Color(0xffe9f0f6), // Warna teks tombol
                     textStyle: const TextStyle(
                       fontSize: 15, // Ukuran font
                       fontWeight: FontWeight.bold, // Berat font
