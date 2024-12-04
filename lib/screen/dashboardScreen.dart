@@ -34,9 +34,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Example: userRole = await Database.getUserRole(widget.username);
 
       // Simulating a delay for fetching data (replace with actual logic)
-      await Future.delayed(const Duration(seconds: 2), () {
+      await Future.delayed(const Duration(seconds: 1), () {
         setState(() {
-          userRole = 'admin'; // Replace this with actual role fetched from the database
+          userRole = ''; // Replace this with actual role fetched from the database
         });
       });
     } catch (e) {
