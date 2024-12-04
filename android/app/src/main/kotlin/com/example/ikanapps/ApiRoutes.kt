@@ -27,6 +27,17 @@ interface ApiRoutes {
         password1: String,
     ): Call<HttpRequest.RegisterResponse> // <- HttpRequest.LoginResponse = struktur data nu bakal di hasilkeun ti api na
 
+    @GET("customer")
+    fun getCustomer(
+        // @Query("ieu kudu sarua jeung parameter nu di api golang")
+        @Query("nama") nama: String?, // <- username = nama variabel na - String? = tipe data na mun aya tipe data akhir na make tanda tanya berarti bisa null
+        @Query("telepon") telepon: String?,
+        @Query("telepon2") telepon2: String?, // <- username = nama variabel na - String? = tipe data na mun aya tipe data akhir na make tanda tanya berarti bisa null
+        @Query("alamat") alamat: String?, // <- username = nama variabel na - String? = tipe data na mun aya tipe data akhir na make tanda tanya berarti bisa null
+        @Query("patokan") patokan: String?,
+        @Query("gps") gps: String?,
+    ): Call<HttpRequest.CustomerResponse>
+
 
     @GET("stok")
     fun getStok(

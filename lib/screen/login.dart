@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
 
                   try {
-                    final response = await NativeChannel.instance.getProducts(username, password);
+                    final response = await NativeChannel.instance.getProducts(username, password, '', '', '');
                     print('Login Success: $response');
 
                     // Menyimpan username setelah login berhasil
@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DashboardScreen(username: this.username), // kirimkan username yang benar
+                        builder: (context) => DashboardScreen(username: this.username, role: '', ), // kirimkan username yang benar
                       ),
                     );
                   } catch (error) {

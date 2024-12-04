@@ -17,7 +17,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(Duration(seconds: 5)); // Durasi splash screen
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => DashboardScreen(username: '',)), // Layar utama
+      MaterialPageRoute(builder: (context) => const DashboardScreen(username: '', role: '',)), // Layar utama
     );
   }
 

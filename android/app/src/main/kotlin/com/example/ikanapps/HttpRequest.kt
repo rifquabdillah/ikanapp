@@ -40,6 +40,12 @@ class HttpRequest(private val context: Context) {
         val isStok: String
     )
 
+
+    data class CustomerResponse(
+        val isCustomer: String
+    )
+
+
     fun login(
         username: String, // <- parameter username
         password: String, // <- parameter password
@@ -73,8 +79,8 @@ class HttpRequest(private val context: Context) {
     }
 
     fun getStok(
-        nama: nama, // <- parameter username
-        harga: harga, // <- parameter password
+        nama: String, // <- parameter username
+        harga: String, // <- parameter password
         callback: (String) -> Unit // <- parameter callback. naha callback: (String) karena struktur data nu dipake LoginResponse bakal nga return tipe data string. tingali contoh na di white label
     ) {
         val call = apiRoutes.getStok(nama, harga)
@@ -86,7 +92,7 @@ class HttpRequest(private val context: Context) {
                 if (response.isSuccessful) { // <- respon sukses
                     response.body()?.let { stokResponse ->
                         Log.d("HttpRequest", "Stok status: ${stokResponse.isStok}")
-                        callback(stokResponse.isLogin) // pass respon api ka callback
+                        callback(stokResponse.isStok) // pass respon api ka callback
                     } ?: run {
                         Log.w("HttpRequest", "Empty response body.")
                         callback("Error: Empty response body") // handle mun api teu nga return data
@@ -97,12 +103,50 @@ class HttpRequest(private val context: Context) {
                 }
             }
 
-            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+            override fun onFailure(call: Call<StokResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Network error: ${t.message}")
+                callback("Error: ${t.message}")
+            }
+        })
+    }
+
+    fun getCustomer(
+        nama: String,
+        telepon: String,
+        telepon2: String,// <- parameter username
+        alamat: String,
+        patokan: String,
+        gps:String,// <- parameter password
+        callback: (String) -> Unit // <- parameter callback. naha callback: (String) karena struktur data nu dipake LoginResponse bakal nga return tipe data string. tingali contoh na di white label
+    ) {
+        val call = apiRoutes.getCustomer(nama, telepon, telepon2, alamat, patokan, gps)
+        call.enqueue(object : retrofit2.Callback<CustomerResponse> {
+            override fun onResponse(
+                call: Call<CustomerResponse>,
+                response: Response<CustomerResponse>
+            ) {
+                if (response.isSuccessful) { // <- respon sukses
+                    response.body()?.let { customerResponse ->
+                        Log.d("HttpRequest", "Customer status: ${customerResponse.isCustomer}")
+                        callback(customerResponse.isCustomer) // pass respon api ka callback
+                    } ?: run {
+                        Log.w("HttpRequest", "Empty response body.")
+                        callback("Error: Empty response body") // handle mun api teu nga return data
+                    }
+                } else {
+                    Log.e("HttpRequest", "Error: ${response.code()} ${response.message()}")
+                    callback("Error: ${response.message()}") // handle mun api nga return error
+                }
+            }
+
+            override fun onFailure(call: Call<CustomerResponse>, t: Throwable) {
                 Log.e("HttpRequest", "Network error: ${t.message}")
                 callback("Error: ${t.message}") // handle error internet
             }
         })
     }
+
+
 
 
 }

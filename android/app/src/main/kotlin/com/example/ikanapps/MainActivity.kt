@@ -4,12 +4,14 @@ import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import android.util.Log
 import com.example.ikanapps.HttpRequest
 
 class MainActivity : FlutterActivity() {
     private val httpRequest = HttpRequest(this)
     private val AKUN_CHANNEL = "com.example.ikanapps/akun_channel"
     private val STOK_CHANNEL = "com.example.ikanapps/stok_channel"
+    private val CUSTOMER_CHANNEL = "com.example.ikanapps/customer_channel"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -52,5 +54,32 @@ class MainActivity : FlutterActivity() {
                     } else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CUSTOMER_CHANNEL)
+            .setMethodCallHandler { call, result ->
+
+                // Mendapatkan parameter untuk nama, telepon, telepon2, alamat, patokan, gps
+                val nama = call.argument<String>("nama")
+                val telepon = call.argument<String>("telepon")
+                val telepon2 = call.argument<String>("telepon2")
+                val alamat = call.argument<String>("alamat")
+                val patokan = call.argument<String>("patokan")
+                val gps = call.argument<String>("gps")
+
+                // Cek apakah semua parameter yang diperlukan tidak null
+                if (nama != null && telepon != null && telepon2 != null && alamat != null && patokan != null && gps != null) {
+                    when (call.method) {
+                        "fetchCustomer" -> { // Nama metode yang dipanggil dari Flutter
+                            httpRequest.getCustomer(nama, telepon, telepon2, alamat, patokan, gps) { response ->
+                                result.success(response) // Mengirimkan response ke Flutter
+                            }
+                        }
+                        else -> result.notImplemented() // Jika method tidak dikenali
+                    }
+                } else {
+                    result.error("INVALID_PARAMETERS", "Some parameters are null", null) // Menangani jika parameter null
+                }
+            }
+
     }
 }

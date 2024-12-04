@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ikanapps/screen/UserManagementScreen.dart';
 import 'package:ikanapps/screen/orderHistory.dart';
 import 'package:ikanapps/screen/pembelian.dart';
 import 'orderScreen.dart';
@@ -6,18 +7,44 @@ import 'stockManagementScreen.dart';
 import 'reportScreen.dart';
 import 'package:ikanapps/backend/nativeChannel.dart';
 
-
 class DashboardScreen extends StatefulWidget {
-  final String username;  // Username passed from the login screen
+  final String username; // Username passed from the login screen
 
-  const DashboardScreen({Key? key, required this.username}) : super(key: key);
+  const DashboardScreen({Key? key, required this.username, required String role}) : super(key: key);
 
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  late String userRole; // Add a field for user role
+
   @override
+  void initState() {
+    super.initState();
+    userRole = 'user'; // Default role before fetching from DB
+    _fetchUserRole(); // Fetch role from the database
+  }
+
+  // Simulate a function to fetch the user role from an API or database
+  Future<void> _fetchUserRole() async {
+    try {
+      // Simulate an API call or database query that retrieves the user role
+      // Replace this with actual database/API logic
+      // Example: userRole = await Database.getUserRole(widget.username);
+
+      // Simulating a delay for fetching data (replace with actual logic)
+      await Future.delayed(const Duration(seconds: 2), () {
+        setState(() {
+          userRole = 'admin'; // Replace this with actual role fetched from the database
+        });
+      });
+    } catch (e) {
+      // Handle any errors or issues during fetching the role
+      print("Error fetching user role: $e");
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFe9f0f8),
@@ -43,9 +70,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontSize: 20,
                   ),
                 ),
-                const Text(
-                  "Admin",
-                  style: TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'CooperMdBT'),
+                // Displaying role dynamically
+                Text(
+                  userRole.isNotEmpty ? userRole : "Role Not Available",
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                    fontFamily: 'CooperMdBT',
+                  ),
                 ),
               ],
             ),
@@ -294,7 +326,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: Color(0xFF2365a2)),
             accountName: Text(
-              widget.username.isNotEmpty ? widget.username : "Username Not Available", // Menampilkan username
+              widget.username.isNotEmpty ? widget.username : "Username Not Available",
               style: const TextStyle(
                 fontWeight: FontWeight.w500,
                 color: Colors.black,
@@ -309,28 +341,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             currentAccountPicture: const CircleAvatar(
               backgroundImage: NetworkImage("https://via.placeholder.com/150"),
             ),
-            // Menambahkan tombol logout di kanan
             otherAccountsPictures: [
               IconButton(
                 icon: const Icon(Icons.exit_to_app, color: Colors.white),
                 onPressed: () {
-                  // Logic untuk logout, misalnya dengan memanggil fungsi logout
-                  _logout(context); // Ganti dengan logika logout sesuai kebutuhan
+                  _logout(context); // Logic for logout
                 },
               ),
             ],
           ),
-          ListTile(
-            leading: const Icon(Icons.inventory),
-            title: const Text("Stock Management", style: TextStyle(fontFamily: 'CooperMdBT')),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const StockManagementScreen()),
-              );
-            },
-          ),
-          // Menggunakan ExpansionTile untuk Order
           ExpansionTile(
             leading: const Icon(Icons.shopping_cart),
             title: const Text("Order", style: TextStyle(fontFamily: 'CooperMdBT')),
@@ -339,67 +358,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 leading: const Icon(Icons.add_shopping_cart),
                 title: const Text('Order'),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const TransactionScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionScreen()));
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.history),
-                title: const Text('Penerimaan Order'),
+                title: const Text('Order History'),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const OrderHistoryScreen(
-                        customerData: customerData,
-                        orderList: orderList,
-                      ),
-                    ),
-                  );
-                  // Tidak perlu memanggil Navigator.pop(context) di sini.
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderHistoryScreen(customerData: {}, orderList: [],)));
                 },
               ),
-
             ],
           ),
           ListTile(
             leading: const Icon(Icons.receipt_long),
             title: const Text("Pembelian", style: TextStyle(fontFamily: 'CooperMdBT')),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PembelianScreen()),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const PembelianScreen()));
             },
           ),
           ListTile(
             leading: const Icon(Icons.report),
             title: const Text("Report", style: TextStyle(fontFamily: 'CooperMdBT')),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ReportScreen()),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
             },
           ),
-          // Menambahkan gambar di bagian bawah
-          const Spacer(), // Menggunakan Spacer untuk memberi ruang kosong di atas gambar
-          Padding(
-            padding: const EdgeInsets.only(right: 25.0),
-            child: Image.asset(
-              'assets/menjala-sq-normal.png', // Ganti dengan path gambar yang sesuai
-              height: 120, // Sesuaikan ukuran gambar
-              width: double.infinity, // Mengatur gambar untuk memenuhi lebar layar, // Sesuaikan gambar agar pas dengan lebar dan tinggi
+          // Show admin options if the user is an admin
+          if (userRole == 'admin') ...[
+            ListTile(
+              leading: const Icon(Icons.manage_accounts),
+              title: const Text("Pekerja", style: TextStyle(fontFamily: 'CooperMdBT')),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const UserManagementScreen()));
+              },
             ),
-          ),
+            ListTile(
+              leading: const Icon(Icons.add_box),
+              title: const Text("Manage Stock", style: TextStyle(fontFamily: 'CooperMdBT')),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const StockManagementScreen()));
+              },
+            ),
+          ],
+          // Show owner options if the user is an owner
+          if (userRole == 'owner') ...[
+            ListTile(
+              leading: const Icon(Icons.manage_accounts),
+              title: const Text("Pekerja", style: TextStyle(fontFamily: 'CooperMdBT')),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const UserManagementScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_box),
+              title: const Text("Manage Stock", style: TextStyle(fontFamily: 'CooperMdBT')),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const StockManagementScreen()));
+              },
+            ),
+          ],
         ],
       ),
     );
   }
-
-
   Widget _buildReportCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -425,8 +447,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// Fungsi logout (contoh)
-void _logout(BuildContext context) {
-  // Implementasikan logika logout di sini, misalnya dengan menghapus session atau token
-  Navigator.pushReplacementNamed(context, '/login'); // Pindahkan ke halaman login setelah logout
-}
+  // Logout function (example)
+  void _logout(BuildContext context) {
+    Navigator.pushReplacementNamed(context, '/login'); // Implement your logout logic here
+  }
+
