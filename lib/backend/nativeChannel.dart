@@ -14,14 +14,11 @@ class NativeChannel {
   }
 
   // Fungsi untuk mengambil data produk atau user dari Native code
-  Future<String> getProducts(String username, String password, String nama, String alamat, String email) async {
+  Future<String> getProducts(String username, String password) async {
     try {
       final result = await AKUN_CHANNEL.invokeMethod('fetchProducts', {
         'username': username,
         'password': password,
-        'nama': nama,
-        'alamat': alamat,
-        'email': email,
       });
 
       // Pastikan hasilnya berupa String
@@ -35,6 +32,7 @@ class NativeChannel {
       throw 'Failed to get data: ${e.message}';
     }
   }
+
 
 
   Future<String> updateUserRole(String username, String role) async {

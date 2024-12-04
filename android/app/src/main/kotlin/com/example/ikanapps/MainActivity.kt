@@ -18,23 +18,27 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AKUN_CHANNEL)
             .setMethodCallHandler { call, result ->
-
-                // Mendapatkan parameter username dan password
-                val username = call.argument<String>("username") // mendapatkan username
-                val password = call.argument<String>("password") // mendapatkan password
+                // Mendapatkan parameter yang diperlukan
+                val username = call.argument<String>("username")
+                val password = call.argument<String>("password")
 
                 // Cek apakah username dan password tidak null
                 if (username != null && password != null) {
                     when (call.method) {
-                        "fetchProducts" -> { // Nama metode yang dipanggil dari Flutter
+                        "fetchProducts" -> {  // Proses login
+                            // Menangani login dengan httpRequest.login yang menerima nama dan alamat
                             httpRequest.login(username, password) { response ->
-                                result.success(response) // Mengirimkan response ke Flutter
+                                if (response != null) {
+                                    result.success(response)  // Mengirimkan response ke Flutter
+                                } else {
+                                    result.error("LOGIN_FAILED", "Login failed, please check credentials", null)
+                                }
                             }
                         }
-                        else -> result.notImplemented() // Jika method tidak dikenali
+                        else -> result.notImplemented()  // Jika method tidak dikenali
                     }
                 } else {
-                    result.error("INVALID_PARAMETERS", "Username or password is null", null) // Menangani jika parameter null
+                    result.error("INVALID_PARAMETERS", "One or more parameters are null", null)
                 }
             }
 

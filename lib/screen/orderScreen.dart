@@ -87,9 +87,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
                   return DropdownButtonFormField<String>(
                     value: _selectedCustomer != null
-                        ? customersMap.keys
-                        .firstWhere(
-                            (key) => customersMap[key] == _selectedCustomer)
+                        ? customersMap.keys.firstWhere(
+                            (key) => customersMap[key] == _selectedCustomer,
+                        orElse: () => ''
+                    )
                         : null,
                     onChanged: (String? key) {
                       setState(() {

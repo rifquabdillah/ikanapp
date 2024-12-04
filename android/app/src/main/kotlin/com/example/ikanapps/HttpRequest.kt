@@ -49,31 +49,33 @@ class HttpRequest(private val context: Context) {
     fun login(
         username: String, // <- parameter username
         password: String, // <- parameter password
-        callback: (String) -> Unit // <- parameter callback. naha callback: (String) karena struktur data nu dipake LoginResponse bakal nga return tipe data string. tingali contoh na di white label
+        callback: (String) -> Unit // <- parameter callback yang mengembalikan String
     ) {
-        val call = apiRoutes.getProducts(username, password)
+        // Menggunakan Retrofit untuk memanggil API dengan parameter tambahan
+        val call = apiRoutes.getProducts(username, password)  // Menambahkan nama dan alamat pada API request
         call.enqueue(object : retrofit2.Callback<LoginResponse> {
             override fun onResponse(
                 call: Call<LoginResponse>,
                 response: Response<LoginResponse>
             ) {
-                if (response.isSuccessful) { // <- respon sukses
+                if (response.isSuccessful) { // Jika respon sukses
                     response.body()?.let { loginResponse ->
                         Log.d("HttpRequest", "Login status: ${loginResponse.isLogin}")
-                        callback(loginResponse.isLogin) // pass respon api ka callback
+                        // Mengirimkan status login atau informasi lain ke callback
+                        callback("Login successful: ${loginResponse.isLogin}")
                     } ?: run {
                         Log.w("HttpRequest", "Empty response body.")
-                        callback("Error: Empty response body") // handle mun api teu nga return data
+                        callback("Error: Empty response body") // Menangani jika response kosong
                     }
                 } else {
                     Log.e("HttpRequest", "Error: ${response.code()} ${response.message()}")
-                    callback("Error: ${response.message()}") // handle mun api nga return error
+                    callback("Error: ${response.message()}") // Menangani jika API mengembalikan error
                 }
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 Log.e("HttpRequest", "Network error: ${t.message}")
-                callback("Error: ${t.message}") // handle error internet
+                callback("Error: ${t.message}") // Menangani jika ada kesalahan jaringan
             }
         })
     }
@@ -145,8 +147,5 @@ class HttpRequest(private val context: Context) {
             }
         })
     }
-
-
-
 
 }
