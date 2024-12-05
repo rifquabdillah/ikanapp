@@ -30,6 +30,7 @@ class HttpRequest(private val context: Context) {
     // struktur data respon api login
     data class LoginResponse(
         val isLogin: String
+        val role: String
     )
 
     data class RegisterResponse(
@@ -47,38 +48,38 @@ class HttpRequest(private val context: Context) {
 
 
     fun login(
-        username: String, // <- parameter username
-        password: String, // <- parameter password
-        callback: (String) -> Unit // <- parameter callback yang mengembalikan String
+        username: String,  // Parameter username
+        password: String,  // Parameter password
+        callback: (String, String?) -> Unit // Callback untuk mengembalikan status dan role
     ) {
-        // Menggunakan Retrofit untuk memanggil API dengan parameter tambahan
-        val call = apiRoutes.getProducts(username, password)  // Menambahkan nama dan alamat pada API request
+        val call = apiRoutes.getAkun(username, password)  // Memanggil API login
         call.enqueue(object : retrofit2.Callback<LoginResponse> {
             override fun onResponse(
                 call: Call<LoginResponse>,
                 response: Response<LoginResponse>
             ) {
-                if (response.isSuccessful) { // Jika respon sukses
+                if (response.isSuccessful) {  // Jika respon sukses
                     response.body()?.let { loginResponse ->
                         Log.d("HttpRequest", "Login status: ${loginResponse.isLogin}")
-                        // Mengirimkan status login atau informasi lain ke callback
-                        callback("Login successful: ${loginResponse.isLogin}")
+                        // Kirim status login dan role ke callback
+                        callback("Login successful: ${loginResponse.isLogin}", loginResponse.role)
                     } ?: run {
                         Log.w("HttpRequest", "Empty response body.")
-                        callback("Error: Empty response body") // Menangani jika response kosong
+                        callback("Error: Empty response body", null)  // Menangani jika response kosong
                     }
                 } else {
                     Log.e("HttpRequest", "Error: ${response.code()} ${response.message()}")
-                    callback("Error: ${response.message()}") // Menangani jika API mengembalikan error
+                    callback("Error: ${response.message()}", null)  // Menangani jika API mengembalikan error
                 }
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 Log.e("HttpRequest", "Network error: ${t.message}")
-                callback("Error: ${t.message}") // Menangani jika ada kesalahan jaringan
+                callback("Error: ${t.message}", null)  // Menangani jika ada kesalahan jaringan
             }
         })
     }
+
 
     fun getStok(
         nama: String, // <- parameter username

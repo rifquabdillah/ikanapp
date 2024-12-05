@@ -36,7 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Simulating a delay for fetching data (replace with actual logic)
       await Future.delayed(const Duration(seconds: 1), () {
         setState(() {
-          userRole = ''; // Replace this with actual role fetched from the database
+          userRole = 'owner'; // Replace this with actual role fetched from the database
         });
       });
     } catch (e) {

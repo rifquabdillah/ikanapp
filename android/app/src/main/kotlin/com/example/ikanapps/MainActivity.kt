@@ -27,9 +27,10 @@ class MainActivity : FlutterActivity() {
                     when (call.method) {
                         "fetchProducts" -> {  // Proses login
                             // Menangani login dengan httpRequest.login yang menerima nama dan alamat
-                            httpRequest.login(username, password) { response ->
-                                if (response != null) {
-                                    result.success(response)  // Mengirimkan response ke Flutter
+                            httpRequest.login(username, password) { loginStatus, role ->
+                                if (loginStatus.contains("successful")) {  // Cek jika login berhasil
+                                    // Mengirimkan response sukses dan role ke Flutter
+                                    result.success("Login successful: $loginStatus, Role: $role")
                                 } else {
                                     result.error("LOGIN_FAILED", "Login failed, please check credentials", null)
                                 }
@@ -41,6 +42,7 @@ class MainActivity : FlutterActivity() {
                     result.error("INVALID_PARAMETERS", "One or more parameters are null", null)
                 }
             }
+
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, STOK_CHANNEL)
             .setMethodCallHandler { call, result ->

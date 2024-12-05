@@ -47,7 +47,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
     try {
       // Memanggil fungsi untuk mengambil data customer dari Native Channel
       final String result = await NativeChannel.instance.getCustomers(
-          '', '', '', '', '', '' // Gantilah parameter ini sesuai kebutuhan
+          '', '', '', '', '', '', // Gantilah parameter ini sesuai kebutuhan
       );
       print("Fetched Customers: $result");  // Log hasil pemanggilan
 

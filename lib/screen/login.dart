@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
 
                   try {
-                    final response = await NativeChannel.instance.getProducts(username, password);
+                    final response = await NativeChannel.instance.getAkun(username, password);
                     print('Login Success: $response');
 
                     // Menyimpan username setelah login berhasil

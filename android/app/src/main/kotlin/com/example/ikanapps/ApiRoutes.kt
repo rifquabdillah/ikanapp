@@ -9,7 +9,7 @@ import retrofit2.http.Query
 interface ApiRoutes {
     // tujuan atau endpont api jang login
     @GET("login")
-    fun getProducts(
+    fun getAkun(
         // @Query("ieu kudu sarua jeung parameter nu di api golang")
         @Query("username") username: String?, // <- username = nama variabel na - String? = tipe data na mun aya tipe data akhir na make tanda tanya berarti bisa null
         @Query("password") password: String?,

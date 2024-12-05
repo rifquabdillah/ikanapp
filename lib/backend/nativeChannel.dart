@@ -14,7 +14,7 @@ class NativeChannel {
   }
 
   // Fungsi untuk mengambil data produk atau user dari Native code
-  Future<String> getProducts(String username, String password) async {
+  Future<String> getAkun(String username, String password) async {
     try {
       final result = await AKUN_CHANNEL.invokeMethod('fetchProducts', {
         'username': username,

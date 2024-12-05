@@ -25,7 +25,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Future<void> _getUserData(String username, String password, String email, String alamat) async {
     try {
       // Panggil API dengan username dan password untuk mendapatkan data pengguna
-      final response = await NativeChannel.instance.getProducts(username, password);
+      final response = await NativeChannel.instance.getAkun(username, password);
       print('User Data Success: $response');
 
       // Misalnya response adalah String JSON yang perlu diparsing
