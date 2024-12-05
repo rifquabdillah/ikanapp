@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
+import 'package:ikanapps/screen/orderScreen.dart';
 
 class NativeChannel {
   NativeChannel._privateConstructor();
@@ -54,22 +57,19 @@ class NativeChannel {
   }
 
 
-
-  Future<String> getCustomers(String nama, String telepon,String telepon2, String alamat, String patokan, String gps) async {
+  Future<Map<String, Customer>> getCustomers(String nama, String telepon, String telepon2, String alamat, String patokan, String gps) async {
     try {
-      // Call the native method and get the result
-      final result = await CUSTOMER_CHANNEL.invokeMethod('fetchCustomer', {
-        'nama': nama,
-        'telepon': telepon,
-        'telepon2':telepon2,
-        'alamat':alamat,
-        'patokan':patokan,
-        'gps' :gps
-      });
+      final result = await NativeChannel.instance.getCustomers(
+          nama, telepon, telepon2, alamat, patokan, gps
+      );
 
-      // Pastikan hasilnya berupa String
+      // Pastikan hasilnya berupa string JSON
       if (result is String) {
-        return result; // Mengembalikan hasil berupa String
+        // Decode JSON menjadi Map
+        final Map<String, dynamic> rawData = json.decode(result as String);
+        return rawData.map((key, value) {
+          return MapEntry(key, Customer.fromJson(value));
+        });
       } else {
         throw 'Expected a String but received: ${result.runtimeType}';
       }
@@ -78,6 +78,8 @@ class NativeChannel {
       throw 'Failed to get data: ${e.message}';
     }
   }
+
+
 
 
 

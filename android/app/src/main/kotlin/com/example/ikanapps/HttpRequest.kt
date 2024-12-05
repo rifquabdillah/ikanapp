@@ -43,8 +43,15 @@ class HttpRequest(private val context: Context) {
 
 
     data class CustomerResponse(
-        val isCustomer: String
+        val nama: String,
+        val telepon: String,
+        val telepon2: String,
+        val alamat: String,
+        val patokan: String,
+        val gps: String,
+        val isCustomer: Boolean // jika perlu status customer
     )
+
 
 
     fun login(
@@ -116,11 +123,11 @@ class HttpRequest(private val context: Context) {
     fun getCustomer(
         nama: String,
         telepon: String,
-        telepon2: String,// <- parameter username
+        telepon2: String,
         alamat: String,
         patokan: String,
-        gps:String,// <- parameter password
-        callback: (String) -> Unit // <- parameter callback. naha callback: (String) karena struktur data nu dipake LoginResponse bakal nga return tipe data string. tingali contoh na di white label
+        gps: String,
+        callback: (String) -> Unit
     ) {
         val call = apiRoutes.getCustomer(nama, telepon, telepon2, alamat, patokan, gps)
         call.enqueue(object : retrofit2.Callback<CustomerResponse> {
@@ -128,25 +135,36 @@ class HttpRequest(private val context: Context) {
                 call: Call<CustomerResponse>,
                 response: Response<CustomerResponse>
             ) {
-                if (response.isSuccessful) { // <- respon sukses
+                if (response.isSuccessful) {
                     response.body()?.let { customerResponse ->
-                        Log.d("HttpRequest", "Customer status: ${customerResponse.isCustomer}")
-                        callback(customerResponse.isCustomer) // pass respon api ka callback
+                        // Jika data respons valid, buat Map data untuk dikirim ke Flutter
+                        val customerData = mapOf(
+                            "customer1" to mapOf(
+                                "nama" to customerResponse.nama,
+                                "telepon" to customerResponse.telepon,
+                                "telepon2" to customerResponse.telepon2,
+                                "alamat" to customerResponse.alamat,
+                                "patokan" to customerResponse.patokan,
+                                "gps" to customerResponse.gps
+                            )
+                        )
+
+                        // Konversi Map ke JSON string
+                        val jsonResult = JSONObject(customerData).toString()
+                        callback(jsonResult) // Kirimkan data sebagai JSON string ke Flutter
                     } ?: run {
-                        Log.w("HttpRequest", "Empty response body.")
-                        callback("Error: Empty response body") // handle mun api teu nga return data
+                        callback("Error: Empty response body") // Jika response kosong
                     }
                 } else {
-                    Log.e("HttpRequest", "Error: ${response.code()} ${response.message()}")
-                    callback("Error: ${response.message()}") // handle mun api nga return error
+                    callback("Error: ${response.message()}") // Handle jika respons error
                 }
             }
 
             override fun onFailure(call: Call<CustomerResponse>, t: Throwable) {
-                Log.e("HttpRequest", "Network error: ${t.message}")
-                callback("Error: ${t.message}") // handle error internet
+                callback("Error: ${t.message}") // Handle jika terjadi kesalahan jaringan
             }
         })
     }
+
 
 }
