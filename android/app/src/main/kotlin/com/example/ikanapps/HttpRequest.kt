@@ -37,14 +37,8 @@ class HttpRequest(private val context: Context) {
     )
 
     data class StokResponse(
-        val data: List<Fish> // The response contains a list of Fish objects.
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
     )
-
-    data class Fish(
-        val id: Int,   // Fish ID
-        val nama: String  // Fish name
-    )
-
 
     fun login(
         username: String,

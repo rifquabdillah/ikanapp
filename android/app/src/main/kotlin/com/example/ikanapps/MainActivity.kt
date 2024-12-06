@@ -50,35 +50,23 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "fetchStok" -> {
                         httpRequest.getStok { response ->
-                            if (response.startsWith("Success:")) {
-                                try {
-                                    // Parse the response string and return a structured list to Flutter
-                                    val stokList = response.removePrefix("Success: ")
-                                        .split(", ")
-                                        .mapNotNull { item ->
-                                            try {
-                                                val parts = item.split(", ")
-                                                val id = parts[0].removePrefix("id: ").toInt()
-                                                val nama = parts[1].removePrefix("nama: ")
-                                                mapOf("id" to id, "nama" to nama)
-                                            } catch (e: Exception) {
-                                                Log.e("HttpRequest", "Error parsing item: $item", e)
-                                                null // Ignore the invalid item
-                                            }
-                                        }
+                            try {
+                                // Assuming response is already a List<Map<String, Any>>
+                                if (response is List<*>) {
+                                    // Filter and map only items that are valid Map<String, Any>
+                                    val stokList = response.filterIsInstance<Map<String, Any>>()
 
                                     if (stokList.isNotEmpty()) {
                                         result.success(stokList) // Return the list to Flutter
                                     } else {
                                         result.error("EMPTY_DATA", "No valid stok data found", null)
                                     }
-                                } catch (e: Exception) {
-                                    Log.e("HttpRequest", "Error processing response", e)
-                                    result.error("ERROR", "Failed to parse response", null)
+                                } else {
+                                    result.error("INVALID_RESPONSE", "Response is not a valid List<Map<String, Any>>", null)
                                 }
-                            } else {
-                                // Return error message to Flutter
-                                result.error("ERROR", response, null)
+                            } catch (e: Exception) {
+                                Log.e("HttpRequest", "Error processing response", e)
+                                result.error("ERROR", "Failed to process response", null)
                             }
                         }
                     }
