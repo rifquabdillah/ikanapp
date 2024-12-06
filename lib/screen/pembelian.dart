@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ikanapps/backend/nativeChannel.dart';
 import 'confirmationScreen.dart';
 
 class PembelianScreen extends StatefulWidget {
@@ -9,41 +10,43 @@ class PembelianScreen extends StatefulWidget {
 }
 
 class _PembelianScreenState extends State<PembelianScreen> {
-  final List<Map<String, String>> _customers = [
-    {"name": "Suplier 1", "phone": "08123456789", "address": "Jl. Graha Alam Raya Bandung  No. 1"},
-    {"name": "Suplier 2", "phone": "08198765432", "address": "Jl. Graha Alam Raya Bandung No. 2"},
-    {"name": "Suplier 3", "phone": "08122334455", "address": "Jl. Graha Alam Raya Bandung No. 3"},
-  ];
   Map<String, String>? _selectedCustomer;
-
   String? _selectedFish;
   String? _selectedFishVariant;
   String? _selectedFishCount;
   String? _quantity;
   String? _price;
 
-  final List<String> _fishes = ["Ikan Nila", "Ikan Lele", "Ikan Mas"];
-  final Map<String, List<String>> _fishVariants = {
-    "Ikan Nila": ["Nila Merah", "Nila Hitam"],
-    "Ikan Lele": ["Lele Sangkuriang", "Lele Lokal"],
-    "Ikan Mas": ["Mas Koki", "Mas Lokal"],
-  };
-  final List<String> _fishCountOptions = [
-    "1 kg 1 ekor",
-    "1 kg 2 ekor",
-    "1 kg 3 ekor",
-    "1 kg 4 ekor",
-    "1 kg 5 ekor",
-    "1 kg 6 ekor",
-  ];
-
+  List<String> _fishVariants = [];
   final List<Map<String, String>> _orderList = [];
+
+  Future<List<Map<String, dynamic>>> fetchStok() async {
+    try {
+      print("Fetching stock data...");  // Debugging line
+      var produkData = await NativeChannel.instance.fetchStok();
+      print("Data fetched: $produkData"); // Debugging
+      return produkData;
+    } catch (e) {
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
+
+
+  // Function to update fish variants based on selected fish
+  void _updateFishVariants(String selectedFish) {
+    setState(() {
+      // Simpan logika untuk memperbarui varian berdasarkan ikan yang dipilih dari data backend
+      _fishVariants = ['Varian 1', 'Varian 2', 'Varian 3'];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF6693be),
+        backgroundColor: const Color(0xFF6693be),
         title: const Text("Pembelian Ikan"),
         centerTitle: true,
         elevation: 5,
@@ -60,92 +63,48 @@ class _PembelianScreenState extends State<PembelianScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DropdownField<Map<String, String>>(
-                value: _selectedCustomer,
-                items: _customers,
-                label: "Pilih Supplier",
-                onChanged: _orderList.isEmpty
-                    ? (value) {
-                  setState(() {
-                    _selectedCustomer = value;
-                  });
+              const SizedBox(height: 20),
+
+              // FutureBuilder for fetching fish stock
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: fetchStok(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  print("Loading...");  // Debugging line
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  print("Error: ${snapshot.error}");  // Debugging line
+                  return Text('Error: ${snapshot.error}');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No data available');
+                } else {
+                  print("Fetched data: ${snapshot.data}");  // Debugging line
+                  List<Map<String, dynamic>> fishData = snapshot.data!;
+                  return DropdownField<String>(
+                    value: _selectedFish,
+                    items: fishData.map((item) => item['nama'] as String).toList(),
+                    label: "Pilih Jenis Ikan",
+                    itemLabel: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFish = value;
+                        _selectedFishVariant = null; // Reset variant when fish changes
+                        _updateFishVariants(value!); // Update variants based on selected fish
+                      });
+                    },
+                  );
+
                 }
-                    : null,
-                itemLabel: (item) => item['name']!,
-                isEnabled: _orderList.isEmpty,
-              ),
-              if (_selectedCustomer != null) ...[
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Mengurangi padding horizontal
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.black54,
-                          width: 1,
-                        ),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "${_selectedCustomer!['phone']}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Mengurangi padding horizontal
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.black54,
-                          width: 1,
-                        ),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft, // Menjaga teks tetap di kiri
-                        child: Text(
-                          "${_selectedCustomer!['address']}",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 20),
-              DropdownField<String>(
-                value: _selectedFish,
-                items: _fishes,
-                label: "Pilih Jenis Ikan",
-                itemLabel: (item) => item,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedFish = value;
-                    _selectedFishVariant = null;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
+              },
+            ),
+
+
+            const SizedBox(height: 20),
+              // Dropdown for Fish Variant
               if (_selectedFish != null)
                 DropdownField<String>(
                   value: _selectedFishVariant,
-                  items: _fishVariants[_selectedFish!] ?? [],
+                  items: _fishVariants,
                   label: "Pilih Varian Ikan",
                   itemLabel: (item) => item,
                   onChanged: (value) {
@@ -155,126 +114,29 @@ class _PembelianScreenState extends State<PembelianScreen> {
                   },
                 ),
               const SizedBox(height: 20),
+
+              // TextField for Quantity
               if (_selectedFishVariant != null)
-                DropdownField<String>(
-                  value: _selectedFishCount,
-                  items: _fishCountOptions,
-                  label: "Bobot",
-                  itemLabel: (item) => item,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFishCount = value;
-                    });
-                  },
-                ),
+                _buildQuantityField(),
+
               const SizedBox(height: 20),
-              if (_selectedFishCount != null)
-                TextField(
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    setState(() {
-                      _quantity = value;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Jumlah Transaksi",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              const SizedBox(height: 20),
+              // TextField for Price
               if (_quantity != null)
-                TextField(
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    setState(() {
-                      _price = value;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Harga (per kg)",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                _buildPriceField(),
+
               const SizedBox(height: 15),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_selectedCustomer != null &&
-                        _selectedFish != null &&
-                        _selectedFishVariant != null &&
-                        _selectedFishCount != null &&
-                        _quantity != null) {
-                      _addOrder();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Mohon lengkapi semua data!"),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF6693be),
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    foregroundColor: Color(0xffe9f0f6),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat',
-                    ),
-                  ),
-                  child: const Text("Tambah Pesanan"),
-                ),
-              ),
+              // Button to Add Order
+              _buildAddOrderButton(),
+
               const SizedBox(height: 20),
-              const Text(
-                "Pesanan",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              // Order Summary
+              const Text("Pesanan", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               _buildOrderTable(),
+
               const SizedBox(height: 10),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_orderList.isNotEmpty && _selectedCustomer != null) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ConfirmationScreen(
-                            customerData: _selectedCustomer!,
-                            orderList: _orderList,
-                          ),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Pastikan ada pesanan dan customer terpilih!"),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF6693be), // Warna latar belakang tombol
-                    padding: const EdgeInsets.symmetric(vertical: 16.0), // Padding vertikal
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0), // Sudut tombol melengkung
-                    ),
-                    foregroundColor: Color(0xffe9f0f6), // Warna teks tombol
-                    textStyle: const TextStyle(
-                      fontSize: 15, // Ukuran font
-                      fontWeight: FontWeight.bold, // Berat font
-                      fontFamily: 'Montserrat', // Menetapkan font keluarga
-                    ),
-                  ),
-                  child: const Text("Checkout Transaksi"),
-                ),
-              ),
+              // Confirmation Button
+              _buildConfirmationButton(),
             ],
           ),
         ),
@@ -282,77 +144,161 @@ class _PembelianScreenState extends State<PembelianScreen> {
     );
   }
 
-  Widget DropdownField<T>({
-    required T? value,
-    required List<T> items,
-    required String label,
-    required ValueChanged<T?>? onChanged,
-    required String Function(T) itemLabel,
-    bool isEnabled = true,
-  }) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      items: items.map((item) {
-        return DropdownMenuItem<T>(
-          value: item,
-          child: Text(itemLabel(item)),
-        );
-      }).toList(),
-      onChanged: isEnabled ? onChanged : null,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+  Widget _buildQuantityField() {
+    return TextField(
+      keyboardType: TextInputType.number,
+      onChanged: (value) {
+        setState(() {
+          _quantity = value;
+        });
+      },
+      decoration: const InputDecoration(
+        labelText: "Jumlah Transaksi",
+        border: OutlineInputBorder(),
       ),
     );
   }
 
-  Widget _buildOrderTable() {
-    if (_orderList.isEmpty) {
-      return const Center(child: Text("Belum ada pesanan."));
-    }
+  Widget _buildPriceField() {
+    return TextField(
+      keyboardType: TextInputType.number,
+      onChanged: (value) {
+        setState(() {
+          _price = value;
+        });
+      },
+      decoration: const InputDecoration(
+        labelText: "Harga (per kg)",
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
 
-    return Column(
-      children: _orderList.map((order) {
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 5),
-          child: ListTile(
-            title: Text(order['fish']!),
-            subtitle: Text("Varian: ${order['variant']} - Jumlah: ${order['quantity']}"),
-            trailing: Text("Bobot: ${order['weight']}"),
+  Widget _buildAddOrderButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () {
+          if (_selectedFish != null &&
+              _selectedFishVariant != null &&
+              _quantity != null &&
+              _price != null) {
+            _addOrder();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Mohon lengkapi semua data!")),
+            );
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6693be),
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
           ),
-        );
-      }).toList(),
+          foregroundColor: const Color(0xffe9f0f6),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Montserrat',
+          ),
+        ),
+        child: const Text("Tambah Pesanan"),
+      ),
     );
   }
 
   void _addOrder() {
     setState(() {
       _orderList.add({
-        'customer': _selectedCustomer!['name']!,
         'fish': _selectedFish!,
         'variant': _selectedFishVariant!,
-        'weight': _selectedFishCount!,
         'quantity': _quantity!,
-        'price': _price ?? "0", // Menyimpan harga jika diisi
+        'price': _price!,
       });
-      _selectedFish = null;
-      _selectedFishVariant = null;
-      _selectedFishCount = null;
-      _quantity = null;
-      _price = null; // Reset harga setelah menambah pesanan
     });
   }
 
-  void _processTransaction() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Transaksi selesai!")),
+  Widget _buildOrderTable() {
+    if (_orderList.isEmpty) {
+      return const Text("Belum ada pesanan.");
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: _orderList.length,
+      itemBuilder: (context, index) {
+        final order = _orderList[index];
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.black54),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Ikan: ${order['fish']}"),
+              Text("Varian: ${order['variant']}"),
+              Text("Jumlah: ${order['quantity']}"),
+              Text("Harga: ${order['price']}"),
+            ],
+          ),
+        );
+      },
     );
-    setState(() {
-      _orderList.clear();
-      _selectedCustomer = null; // Reset customer setelah transaksi selesai
-    });
   }
+
+  Widget _buildConfirmationButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _orderList.isEmpty
+            ? null
+            : () {
+          // Navigate to confirmation screen
+        },
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          backgroundColor: const Color(0xFF6693be),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Montserrat',
+          ),
+        ),
+        child: const Text("Konfirmasi Pesanan"),
+      ),
+    );
+  }
+}
+
+Widget DropdownField<T>({
+  required T? value,
+  required List<T> items,
+  required String label,
+  required ValueChanged<T?>? onChanged,
+  required String Function(T) itemLabel,
+  bool isEnabled = true,
+}) {
+  return DropdownButtonFormField<T>(
+      value: value,
+      items: items.map((item) {
+    return DropdownMenuItem<T>(
+      value: item,
+      child: Text(itemLabel(item)),
+    );
+  }).toList(),
+  onChanged: isEnabled ? onChanged : null,
+  decoration: InputDecoration(
+  labelText: label,
+  border: OutlineInputBorder(
+  borderRadius: BorderRadius.circular(10),
+  ),
+  )
+  );
 }

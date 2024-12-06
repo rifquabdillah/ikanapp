@@ -39,10 +39,8 @@ interface ApiRoutes {
     ): Call<HttpRequest.CustomerResponse>
 
 
-    @GET("stok")
+    @GET("get-stok")
     fun getStok(
-        // @Query("ieu kudu sarua jeung parameter nu di api golang")
-        @Query("nama") nama: String?, // <- username = nama variabel na - String? = tipe data na mun aya tipe data akhir na make tanda tanya berarti bisa null
-        @Query("harga") harga: String?,
     ): Call<HttpRequest.StokResponse> // <- HttpRequest.LoginResponse = struktur data nu bakal di hasilkeun ti api na
+
 }

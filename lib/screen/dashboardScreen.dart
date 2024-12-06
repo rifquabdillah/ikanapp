@@ -22,7 +22,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    userRole = 'user'; // Default role before fetching from DB
     _fetchUserRole(); // Fetch role from the database
   }
 
@@ -335,7 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             accountEmail: const Text(
-              "admin@ikanapps.com",
+              "",
               style: TextStyle(fontWeight: FontWeight.w500, color: Colors.black54, fontFamily: 'CooperMdBT'),
             ),
             currentAccountPicture: const CircleAvatar(
@@ -422,6 +421,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
   Widget _buildReportCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),

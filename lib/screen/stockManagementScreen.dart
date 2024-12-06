@@ -8,6 +8,7 @@ class StockManagementScreen extends StatefulWidget {
 }
 
 class _StockManagementScreenState extends State<StockManagementScreen> {
+
   final List<Map<String, dynamic>> _stockList = [
     {"fish": "Ikan Lele", "quantity": 100},
     {"fish": "Ikan Nila", "quantity": 50},

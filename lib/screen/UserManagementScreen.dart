@@ -22,15 +22,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final List<String> roles = ['user', 'admin', 'owner'];
 
   // Fungsi untuk mengambil data pengguna dari backend
-  Future<void> _getUserData(String username, String password, String email, String alamat) async {
+  Future<void> getUser(String nama) async {
     try {
       // Panggil API dengan username dan password untuk mendapatkan data pengguna
-      final response = await NativeChannel.instance.getAkun(username, password);
+      final response = await NativeChannel.instance.fetchUser();
       print('User Data Success: $response');
 
       // Misalnya response adalah String JSON yang perlu diparsing
       if (response.isNotEmpty) {
-        final Map<String, dynamic> userData = _parseUserData(response);
+        final Map<String, dynamic> userData = _parseUserData(response as String);
         setState(() {
           this.username = username;
           this.nama = userData['nama'] ?? 'Unknown';
@@ -62,12 +62,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   void initState() {
     super.initState();
     // Ambil username dan password dari sumber lain, misalnya hardcode atau parameter.
-    String username = 'tester'; // Ganti dengan username yang sesuai
-    String password = 'password123'; // Ganti dengan password yang sesuai
-    String email = 'email@.com'; // Ganti dengan password yang sesuai
-    String alamat = 'jalan';
+    String nama = ''; // Ganti dengan username yang sesuai
     // Panggil fungsi untuk mendapatkan data pengguna berdasarkan username dan password
-    _getUserData(username, password, email, alamat);
+    getUser(nama);
   }
 
   // Fungsi untuk menyimpan perubahan role

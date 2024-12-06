@@ -12,6 +12,8 @@ class MainActivity : FlutterActivity() {
     private val AKUN_CHANNEL = "com.example.ikanapps/akun_channel"
     private val STOK_CHANNEL = "com.example.ikanapps/stok_channel"
     private val CUSTOMER_CHANNEL = "com.example.ikanapps/customer_channel"
+    private val PRODUK_CHANNEL = "com.example.ikanapps/produk_channel"
+    private val USERS_CHANNEL = "com.example.ikanapps/users_channel"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -43,49 +45,51 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
-
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, STOK_CHANNEL)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PRODUK_CHANNEL)
             .setMethodCallHandler { call, result ->
-
-                val nama = call.argument<String>("nama")
-                val harga = call.argument<String>("harga")
-
-                Log.e("STOK_CHANNEL", "Received Jenis Ikan: $nama, harga: $harga")
-
                 when (call.method) {
                     "fetchStok" -> {
-                        httpRequest.getStok(nama!!, harga!!) { response ->
-                            result.success(response)
-                        }
-                    } else -> result.notImplemented()
-                }
-            }
+                        httpRequest.getStok { response ->
+                            if (response.startsWith("Success:")) {
+                                try {
+                                    // Parse the response string and return a structured list to Flutter
+                                    val stokList = response.removePrefix("Success: ")
+                                        .split(", ")
+                                        .mapNotNull { item ->
+                                            try {
+                                                val parts = item.split(", ")
+                                                val id = parts[0].removePrefix("id: ").toInt()
+                                                val nama = parts[1].removePrefix("nama: ")
+                                                mapOf("id" to id, "nama" to nama)
+                                            } catch (e: Exception) {
+                                                Log.e("HttpRequest", "Error parsing item: $item", e)
+                                                null // Ignore the invalid item
+                                            }
+                                        }
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CUSTOMER_CHANNEL)
-            .setMethodCallHandler { call, result ->
-
-                // Mendapatkan parameter untuk nama, telepon, telepon2, alamat, patokan, gps
-                val nama = call.argument<String>("nama")
-                val telepon = call.argument<String>("telepon")
-                val telepon2 = call.argument<String>("telepon2")
-                val alamat = call.argument<String>("alamat")
-                val patokan = call.argument<String>("patokan")
-                val gps = call.argument<String>("gps")
-
-                // Cek apakah semua parameter yang diperlukan tidak null
-                if (nama != null && telepon != null && telepon2 != null && alamat != null && patokan != null && gps != null) {
-                    when (call.method) {
-                        "fetchCustomer" -> { // Nama metode yang dipanggil dari Flutter
-                            httpRequest.getCustomer(nama, telepon, telepon2, alamat, patokan, gps) { response ->
-                                result.success(response) // Mengirimkan response ke Flutter
+                                    if (stokList.isNotEmpty()) {
+                                        result.success(stokList) // Return the list to Flutter
+                                    } else {
+                                        result.error("EMPTY_DATA", "No valid stok data found", null)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("HttpRequest", "Error processing response", e)
+                                    result.error("ERROR", "Failed to parse response", null)
+                                }
+                            } else {
+                                // Return error message to Flutter
+                                result.error("ERROR", response, null)
                             }
                         }
-                        else -> result.notImplemented() // Jika method tidak dikenali
                     }
-                } else {
-                    result.error("INVALID_PARAMETERS", "Some parameters are null", null) // Menangani jika parameter null
+                    else -> result.notImplemented()
                 }
             }
+
+
+
+
+
 
     }
 }

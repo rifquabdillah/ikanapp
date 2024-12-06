@@ -6,30 +6,20 @@ import retrofit2.Call
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Callback
 
 class HttpRequest(private val context: Context) {
 
-    private val baseUrl = "http://103.139.244.148:5002/" // <- http://103.139.244.148 = ip server atau vps - 5001 = port api na
+    private val baseUrl = "http://103.139.244.148:5001/"
 
-    /* ieu builder ngarana, builder fungsi na jang nyieun objek meh bisa dipake tiap library beda beda
-    tingali we dokumentasi tiap library nu ku maneh pake pasti beda cara nga build objek na
-    intina objek ieu isina adalah;
-    url api =  http://ip server:port/
-    addConverterFactory = jang nga bungkus data na jadi json
-     */
     private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl(baseUrl)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    private val apiRoutes: ApiRoutes = retrofit.create(ApiRoutes::class.java) // call interface ApiRoutes
+    private val apiRoutes: ApiRoutes = retrofit.create(ApiRoutes::class.java)
 
-
-
-    // struktur data respon api login
     data class LoginResponse(
-        val isLogin: String
+        val isLogin: String,
         val role: String
     )
 
@@ -37,134 +27,112 @@ class HttpRequest(private val context: Context) {
         val isRegister: String
     )
 
-    data class StokResponse(
-        val isStok: String
-    )
-
-
     data class CustomerResponse(
         val nama: String,
         val telepon: String,
         val telepon2: String,
         val alamat: String,
         val patokan: String,
-        val gps: String,
-        val isCustomer: Boolean // jika perlu status customer
+        val gps: String
+    )
+
+    data class StokResponse(
+        val data: List<Fish> // The response contains a list of Fish objects.
+    )
+
+    data class Fish(
+        val id: Int,   // Fish ID
+        val nama: String  // Fish name
     )
 
 
-
     fun login(
-        username: String,  // Parameter username
-        password: String,  // Parameter password
-        callback: (String, String?) -> Unit // Callback untuk mengembalikan status dan role
+        username: String,
+        password: String,
+        callback: (String, String?) -> Unit
     ) {
-        val call = apiRoutes.getAkun(username, password)  // Memanggil API login
+        Log.d("HttpRequest", "Sending login request with username: $username")
+        val call = apiRoutes.getAkun(username, password)
         call.enqueue(object : retrofit2.Callback<LoginResponse> {
             override fun onResponse(
                 call: Call<LoginResponse>,
                 response: Response<LoginResponse>
             ) {
-                if (response.isSuccessful) {  // Jika respon sukses
+                Log.d("HttpRequest", "Login response received")
+                if (response.isSuccessful) {
                     response.body()?.let { loginResponse ->
-                        Log.d("HttpRequest", "Login status: ${loginResponse.isLogin}")
-                        // Kirim status login dan role ke callback
+                        Log.d("HttpRequest", "Login successful: ${loginResponse.isLogin}, Role: ${loginResponse.role}")
                         callback("Login successful: ${loginResponse.isLogin}", loginResponse.role)
                     } ?: run {
-                        Log.w("HttpRequest", "Empty response body.")
-                        callback("Error: Empty response body", null)  // Menangani jika response kosong
+                        Log.w("HttpRequest", "Empty response body during login")
+                        callback("Error: Empty response body", null)
                     }
                 } else {
-                    Log.e("HttpRequest", "Error: ${response.code()} ${response.message()}")
-                    callback("Error: ${response.message()}", null)  // Menangani jika API mengembalikan error
+                    Log.e("HttpRequest", "Login error: ${response.code()} ${response.message()}")
+                    callback("Error: ${response.message()}", null)
                 }
             }
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                Log.e("HttpRequest", "Network error: ${t.message}")
-                callback("Error: ${t.message}", null)  // Menangani jika ada kesalahan jaringan
+                Log.e("HttpRequest", "Login failed: ${t.message}")
+                callback("Error: ${t.message}", null)
             }
         })
     }
 
-
-    fun getStok(
-        nama: String, // <- parameter username
-        harga: String, // <- parameter password
-        callback: (String) -> Unit // <- parameter callback. naha callback: (String) karena struktur data nu dipake LoginResponse bakal nga return tipe data string. tingali contoh na di white label
-    ) {
-        val call = apiRoutes.getStok(nama, harga)
+    // Ensure you're not accessing invalid indices by checking the list size
+    fun getStok(callback: (String) -> Unit) {
+        Log.d("HttpRequest", "Sending stok request")
+        val call = apiRoutes.getStok() // Assuming this is the correct Retrofit call
         call.enqueue(object : retrofit2.Callback<StokResponse> {
             override fun onResponse(
                 call: Call<StokResponse>,
                 response: Response<StokResponse>
             ) {
-                if (response.isSuccessful) { // <- respon sukses
+                Log.d("HttpRequest", "Stok response received")
+
+                if (response.isSuccessful) {
                     response.body()?.let { stokResponse ->
-                        Log.d("HttpRequest", "Stok status: ${stokResponse.isStok}")
-                        callback(stokResponse.isStok) // pass respon api ka callback
+                        Log.d("HttpRequest", "Full response body: $stokResponse")
+
+                        // Check if 'data' is null or empty
+                        if (stokResponse.data != null && stokResponse.data.isNotEmpty()) {
+                            // Convert the list of Fish objects to a list of maps
+                            val stokList = stokResponse.data.map { fish ->
+                                mapOf(
+                                    "id" to fish.id,
+                                    "nama" to fish.nama
+                                )
+                            }
+
+                            Log.d("HttpRequest", "Processed stok list as maps: $stokList")
+
+                            // Pass the list of maps to the callback
+                            callback("Success: $stokList")
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback("Error: No valid stok data found")
+                        }
                     } ?: run {
-                        Log.w("HttpRequest", "Empty response body.")
-                        callback("Error: Empty response body") // handle mun api teu nga return data
+                        Log.w("HttpRequest", "Response body is null")
+                        callback("Error: Empty response body")
                     }
                 } else {
-                    Log.e("HttpRequest", "Error: ${response.code()} ${response.message()}")
-                    callback("Error: ${response.message()}") // handle mun api nga return error
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback("Error: ${response.message()}")
                 }
             }
 
             override fun onFailure(call: Call<StokResponse>, t: Throwable) {
-                Log.e("HttpRequest", "Network error: ${t.message}")
+                Log.e("HttpRequest", "Stok request failed: ${t.message}")
                 callback("Error: ${t.message}")
             }
         })
     }
 
-    fun getCustomer(
-        nama: String,
-        telepon: String,
-        telepon2: String,
-        alamat: String,
-        patokan: String,
-        gps: String,
-        callback: (String) -> Unit
-    ) {
-        val call = apiRoutes.getCustomer(nama, telepon, telepon2, alamat, patokan, gps)
-        call.enqueue(object : retrofit2.Callback<CustomerResponse> {
-            override fun onResponse(
-                call: Call<CustomerResponse>,
-                response: Response<CustomerResponse>
-            ) {
-                if (response.isSuccessful) {
-                    response.body()?.let { customerResponse ->
-                        // Jika data respons valid, buat Map data untuk dikirim ke Flutter
-                        val customerData = mapOf(
-                            "customer1" to mapOf(
-                                "nama" to customerResponse.nama,
-                                "telepon" to customerResponse.telepon,
-                                "telepon2" to customerResponse.telepon2,
-                                "alamat" to customerResponse.alamat,
-                                "patokan" to customerResponse.patokan,
-                                "gps" to customerResponse.gps
-                            )
-                        )
 
-                        // Konversi Map ke JSON string
-                        val jsonResult = JSONObject(customerData).toString()
-                        callback(jsonResult) // Kirimkan data sebagai JSON string ke Flutter
-                    } ?: run {
-                        callback("Error: Empty response body") // Jika response kosong
-                    }
-                } else {
-                    callback("Error: ${response.message()}") // Handle jika respons error
-                }
-            }
 
-            override fun onFailure(call: Call<CustomerResponse>, t: Throwable) {
-                callback("Error: ${t.message}") // Handle jika terjadi kesalahan jaringan
-            }
-        })
-    }
+
 
 
 }
