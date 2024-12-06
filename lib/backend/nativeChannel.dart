@@ -12,6 +12,7 @@ class NativeChannel {
   static const CUSTOMER_CHANNEL = MethodChannel('com.example.ikanapps/customer_channel');
   static const PRODUK_CHANNEL = MethodChannel('com.example.ikanapps/produk_channel');
   static const USERS_CHANNEL = MethodChannel('com.example.ikanapps/users_channel');
+  static const SUPPLIER_CHANNEL = MethodChannel('com.example.ikanapps/supplier_channel');
 
   void initialize() {
     print('NativeChannel initialized');
@@ -103,6 +104,30 @@ class NativeChannel {
     try {
       // Invoke the platform channel to fetch stock data
       final result = await PRODUK_CHANNEL.invokeMethod('fetchStok');
+
+      // Parse the result into a list of maps
+      if (result is List) {
+        return List<Map<String, dynamic>>.from(result.map((item) {
+          if (item is Map) {
+            return Map<String, dynamic>.from(item);
+          } else {
+            throw FormatException("Invalid item format in result");
+          }
+        }));
+      } else {
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
+      }
+    } catch (e) {
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSupplier() async {
+    try {
+      // Invoke the platform channel to fetch stock data
+      final result = await SUPPLIER_CHANNEL.invokeMethod('fetchSupplier');
 
       // Parse the result into a list of maps
       if (result is List) {

@@ -43,4 +43,8 @@ interface ApiRoutes {
     fun getStok(
     ): Call<HttpRequest.StokResponse> // <- HttpRequest.LoginResponse = struktur data nu bakal di hasilkeun ti api na
 
+    @GET("get-supplier")
+    fun getSupplier(
+    ): Call<HttpRequest.SupplierResponse>
+
 }

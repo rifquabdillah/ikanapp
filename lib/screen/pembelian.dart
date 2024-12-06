@@ -32,6 +32,18 @@ class _PembelianScreenState extends State<PembelianScreen> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchSupplier() async {
+    try {
+      print("Fetching stock data...");  // Debugging line
+      var produkData = await NativeChannel.instance.fetchSupplier();
+      print("Data fetched: $produkData"); // Debugging
+      return produkData;
+    } catch (e) {
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
 
 
   // Function to update fish variants based on selected fish
@@ -63,6 +75,39 @@ class _PembelianScreenState extends State<PembelianScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+              // FutureBuilder for fetching fish stock
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchSupplier(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    print("Loading...");  // Debugging line
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    print("Error: ${snapshot.error}");  // Debugging line
+                    return Text('Error: ${snapshot.error}');
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text('No data available');
+                  } else {
+                    print("Fetched data: ${snapshot.data}");  // Debugging line
+                    List<Map<String, dynamic>> fishData = snapshot.data!;
+                    return DropdownField<String>(
+                      value: _selectedFish,
+                      items: fishData.map((item) => item['nama'] as String).toList(),
+                      label: "Pilih Supplier",
+                      itemLabel: (item) => item,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedFish = value;
+                          _selectedFishVariant = null; // Reset variant when fish changes
+                          _updateFishVariants(value!); // Update variants based on selected fish
+                        });
+                      },
+                    );
+
+                  }
+                },
+              ),
               const SizedBox(height: 20),
 
               // FutureBuilder for fetching fish stock

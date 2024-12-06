@@ -13,7 +13,7 @@ class MainActivity : FlutterActivity() {
     private val STOK_CHANNEL = "com.example.ikanapps/stok_channel"
     private val CUSTOMER_CHANNEL = "com.example.ikanapps/customer_channel"
     private val PRODUK_CHANNEL = "com.example.ikanapps/produk_channel"
-    private val USERS_CHANNEL = "com.example.ikanapps/users_channel"
+    private val SUPPLIER_CHANNEL = "com.example.ikanapps/supplier_channel"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -58,6 +58,35 @@ class MainActivity : FlutterActivity() {
 
                                     if (stokList.isNotEmpty()) {
                                         result.success(stokList) // Return the list to Flutter
+                                    } else {
+                                        result.error("EMPTY_DATA", "No valid stok data found", null)
+                                    }
+                                } else {
+                                    result.error("INVALID_RESPONSE", "Response is not a valid List<Map<String, Any>>", null)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("HttpRequest", "Error processing response", e)
+                                result.error("ERROR", "Failed to process response", null)
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SUPPLIER_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "fetchSupplier" -> {
+                        httpRequest.getSupplier { response ->
+                            try {
+                                // Assuming response is already a List<Map<String, Any>>
+                                if (response is List<*>) {
+                                    // Filter and map only items that are valid Map<String, Any>
+                                    val supplierList = response.filterIsInstance<Map<String, Any>>()
+
+                                    if (supplierList.isNotEmpty()) {
+                                        result.success(supplierList) // Return the list to Flutter
                                     } else {
                                         result.error("EMPTY_DATA", "No valid stok data found", null)
                                     }
