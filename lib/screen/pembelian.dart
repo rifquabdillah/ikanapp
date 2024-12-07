@@ -12,6 +12,7 @@ class PembelianScreen extends StatefulWidget {
 class _PembelianScreenState extends State<PembelianScreen> {
   Map<String, String>? _selectedCustomer;
   String? _selectedFish;
+  String? _selectedSupplier;
   String? _selectedFishVariant;
   String? _selectedFishCount;
   String? _quantity;
@@ -19,6 +20,11 @@ class _PembelianScreenState extends State<PembelianScreen> {
 
   List<String> _fishVariants = [];
   final List<Map<String, String>> _orderList = [];
+  List<Map<String, dynamic>> suppliersData = [];
+  List<Map<String, dynamic>> varianData = [];
+  Map<String, dynamic>? _selectedSupplierDetails;
+
+
 
   Future<List<Map<String, dynamic>>> fetchStok() async {
     try {
@@ -44,15 +50,18 @@ class _PembelianScreenState extends State<PembelianScreen> {
     }
   }
 
-
-
-  // Function to update fish variants based on selected fish
-  void _updateFishVariants(String selectedFish) {
-    setState(() {
-      // Simpan logika untuk memperbarui varian berdasarkan ikan yang dipilih dari data backend
-      _fishVariants = ['Varian 1', 'Varian 2', 'Varian 3'];
-    });
+  Future<List<Map<String, dynamic>>> fetchVarian() async {
+    try {
+      print("Fetching stock data...");  // Debugging line
+      var produkData = await NativeChannel.instance.fetchVarian();
+      print("Data fetched: $produkData"); // Debugging
+      return produkData;
+    } catch (e) {
+      print("Error fetching stock data: $e");
+      return [];
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -75,39 +84,85 @@ class _PembelianScreenState extends State<PembelianScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              // FutureBuilder for fetching fish stock
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: fetchSupplier(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    print("Loading...");  // Debugging line
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    print("Error: ${snapshot.error}");  // Debugging line
-                    return Text('Error: ${snapshot.error}');
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('No data available');
-                  } else {
-                    print("Fetched data: ${snapshot.data}");  // Debugging line
-                    List<Map<String, dynamic>> fishData = snapshot.data!;
-                    return DropdownField<String>(
-                      value: _selectedFish,
-                      items: fishData.map((item) => item['nama'] as String).toList(),
-                      label: "Pilih Supplier",
-                      itemLabel: (item) => item,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedFish = value;
-                          _selectedFishVariant = null; // Reset variant when fish changes
-                          _updateFishVariants(value!); // Update variants based on selected fish
-                        });
-                      },
-                    );
+          future: fetchSupplier(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Text('No data available');
+            } else {
+              List<Map<String, dynamic>> supplierData = snapshot.data!;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownField<String>(
+                    value: _selectedSupplier, // Variable to store selected supplier
+                    items: supplierData.map((item) => item['nama'] as String).toList(),
+                    label: "Pilih Supplier",
+                    itemLabel: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSupplier = value; // Store selected supplier
+                        // Find and set details of the selected supplier
+                        _selectedSupplierDetails = supplierData.firstWhere(
+                              (item) => item['nama'] == value,
+                          orElse: () => {},
+                        );
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  if (_selectedSupplierDetails != null) ...[
+                    Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        "Nomor HP: ${_selectedSupplierDetails!['nomor_handphone'] ?? 'Tidak tersedia'}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        "Alamat: ${_selectedSupplierDetails!['alamat'] ?? 'Tidak tersedia'}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ]
+                ],
+              );
+            }
+          },
+          ),
 
-                  }
-                },
-              ),
               const SizedBox(height: 20),
 
               // FutureBuilder for fetching fish stock
@@ -134,7 +189,6 @@ class _PembelianScreenState extends State<PembelianScreen> {
                       setState(() {
                         _selectedFish = value;
                         _selectedFishVariant = null; // Reset variant when fish changes
-                        _updateFishVariants(value!); // Update variants based on selected fish
                       });
                     },
                   );
@@ -145,19 +199,54 @@ class _PembelianScreenState extends State<PembelianScreen> {
 
 
             const SizedBox(height: 20),
-              // Dropdown for Fish Variant
-              if (_selectedFish != null)
-                DropdownField<String>(
-                  value: _selectedFishVariant,
-                  items: _fishVariants,
-                  label: "Pilih Varian Ikan",
-                  itemLabel: (item) => item,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFishVariant = value;
-                    });
-                  },
-                ),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchVarian(),
+                builder: (context, snapshot) {
+                  // Loading state
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // Error state
+                  if (snapshot.hasError) {
+                    debugPrint("Error: ${snapshot.error}");
+                    return Center(child: Text('Terjadi kesalahan: ${snapshot.error}'));
+                  }
+
+                  // Empty data state
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('Tidak ada data varian tersedia'));
+                  }
+
+                  // Success state
+                  List<Map<String, dynamic>> varianData = snapshot.data!;
+                  List<String> fishVariants = varianData
+                      .map((item) => item['varian']?.toString() ?? "Unknown Variant")
+                      .toList(); // Keep duplicates
+
+                  // Reset value if it's invalid
+                  if (_selectedFishVariant != null &&
+                      !fishVariants.contains(_selectedFishVariant)) {
+                    _selectedFishVariant = null;
+                  }
+
+                  return DropdownField<String>(
+                    value: _selectedFishVariant,
+                    items: fishVariants,
+                    label: "Pilih Varian Ikan",
+                    itemLabel: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFishVariant = value;
+                      });
+                    },
+                  );
+                },
+              ),
+
+
+
+
               const SizedBox(height: 20),
 
               // TextField for Quantity

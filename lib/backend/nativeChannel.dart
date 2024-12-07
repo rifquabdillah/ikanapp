@@ -13,6 +13,7 @@ class NativeChannel {
   static const PRODUK_CHANNEL = MethodChannel('com.example.ikanapps/produk_channel');
   static const USERS_CHANNEL = MethodChannel('com.example.ikanapps/users_channel');
   static const SUPPLIER_CHANNEL = MethodChannel('com.example.ikanapps/supplier_channel');
+  static const VARIAN_CHANNEL = MethodChannel('com.example.ikanapps/varian_channel');
 
   void initialize() {
     print('NativeChannel initialized');
@@ -56,28 +57,29 @@ class NativeChannel {
     }
   }
 
-  Future<Map<String, Customer>> getCustomers(String nama, String telepon, String telepon2, String alamat, String patokan, String gps) async {
+  Future<List<Map<String, dynamic>>> fetchCustomer() async {
     try {
-      final result = await NativeChannel.instance.getCustomers(
-          nama, telepon, telepon2, alamat, patokan, gps
-      );
+      // Invoke the platform channel to fetch stock data
+      final result = await CUSTOMER_CHANNEL.invokeMethod('fetchCustomer');
 
-      // Pastikan hasilnya berupa string JSON
-      if (result is String) {
-        // Decode JSON menjadi Map
-        final Map<String, dynamic> rawData = json.decode(result as String);
-        return rawData.map((key, value) {
-          return MapEntry(key, Customer.fromJson(value));
-        });
+      // Parse the result into a list of maps
+      if (result is List) {
+        return List<Map<String, dynamic>>.from(result.map((item) {
+          if (item is Map) {
+            return Map<String, dynamic>.from(item);
+          } else {
+            throw FormatException("Invalid item format in result");
+          }
+        }));
       } else {
-        throw 'Expected a String but received: ${result.runtimeType}';
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
       }
-    } on PlatformException catch (e) {
-      print('Failed to get data: ${e.message}');
-      throw 'Failed to get data: ${e.message}';
+    } catch (e) {
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
+      return [];
     }
   }
-
   // Fungsi untuk mendapatkan data stok
   Future<Map<String, dynamic>> getStok(String nama,String varian,String ukuran, String harga) async {
     try {
@@ -128,6 +130,30 @@ class NativeChannel {
     try {
       // Invoke the platform channel to fetch stock data
       final result = await SUPPLIER_CHANNEL.invokeMethod('fetchSupplier');
+
+      // Parse the result into a list of maps
+      if (result is List) {
+        return List<Map<String, dynamic>>.from(result.map((item) {
+          if (item is Map) {
+            return Map<String, dynamic>.from(item);
+          } else {
+            throw FormatException("Invalid item format in result");
+          }
+        }));
+      } else {
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
+      }
+    } catch (e) {
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchVarian() async {
+    try {
+      // Invoke the platform channel to fetch stock data
+      final result = await VARIAN_CHANNEL.invokeMethod('fetchVarian');
 
       // Parse the result into a list of maps
       if (result is List) {

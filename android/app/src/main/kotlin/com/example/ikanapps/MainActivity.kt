@@ -14,6 +14,7 @@ class MainActivity : FlutterActivity() {
     private val CUSTOMER_CHANNEL = "com.example.ikanapps/customer_channel"
     private val PRODUK_CHANNEL = "com.example.ikanapps/produk_channel"
     private val SUPPLIER_CHANNEL = "com.example.ikanapps/supplier_channel"
+    private val VARIAN_CHANNEL = "com.example.ikanapps/varian_channel"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -103,6 +104,64 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CUSTOMER_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "fetchCustomer" -> {
+                        httpRequest.getCustomer { response ->
+                            try {
+                                // Assuming response is already a List<Map<String, Any>>
+                                if (response is List<*>) {
+                                    // Filter and map only items that are valid Map<String, Any>
+                                    val customerList = response.filterIsInstance<Map<String, Any>>()
+
+                                    if (customerList.isNotEmpty()) {
+                                        result.success(customerList) // Return the list to Flutter
+                                    } else {
+                                        result.error("EMPTY_DATA", "No valid stok data found", null)
+                                    }
+                                } else {
+                                    result.error("INVALID_RESPONSE", "Response is not a valid List<Map<String, Any>>", null)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("HttpRequest", "Error processing response", e)
+                                result.error("ERROR", "Failed to process response", null)
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, VARIAN_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "fetchVarian" -> {
+                        httpRequest.getVarian { response ->
+                            try {
+                                // Assuming response is already a List<Map<String, Any>>
+                                if (response is List<*>) {
+                                    // Filter and map only items that are valid Map<String, Any>
+                                    val varianList = response.filterIsInstance<Map<String, Any>>()
+
+                                    if (varianList.isNotEmpty()) {
+                                        result.success(varianList) // Return the list to Flutter
+                                    } else {
+                                        result.error("EMPTY_DATA", "No valid stok data found", null)
+                                    }
+                                } else {
+                                    result.error("INVALID_RESPONSE", "Response is not a valid List<Map<String, Any>>", null)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("HttpRequest", "Error processing response", e)
+                                result.error("ERROR", "Failed to process response", null)
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
 
 
 

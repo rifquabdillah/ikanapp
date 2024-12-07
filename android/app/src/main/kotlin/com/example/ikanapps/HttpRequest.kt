@@ -28,12 +28,7 @@ class HttpRequest(private val context: Context) {
     )
 
     data class CustomerResponse(
-        val nama: String,
-        val telepon: String,
-        val telepon2: String,
-        val alamat: String,
-        val patokan: String,
-        val gps: String
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
     )
 
     data class StokResponse(
@@ -41,6 +36,10 @@ class HttpRequest(private val context: Context) {
     )
 
     data class SupplierResponse(
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
+    )
+
+    data class VarianResponse(
         val data: List<Map<String, Any>> // The response contains a list of Fish objects.
     )
 
@@ -153,6 +152,84 @@ class HttpRequest(private val context: Context) {
             }
 
             override fun onFailure(call: Call<SupplierResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Stok request failed: ${t.message}")
+                callback(emptyList()) // Return empty list if the request fails
+            }
+        })
+    }
+
+    fun getCustomer(callback: (List<Map<String, Any>>) -> Unit) {
+        Log.d("HttpRequest", "Sending stok request")
+        val call = apiRoutes.getCustomer() // Assuming this is the correct Retrofit call
+        call.enqueue(object : retrofit2.Callback<CustomerResponse> {
+            override fun onResponse(
+                call: Call<CustomerResponse>,
+                response: Response<CustomerResponse>
+            ) {
+                Log.d("HttpRequest", "Customer response received")
+
+                if (response.isSuccessful) {
+                    response.body()?.let { customerResponse ->
+                        Log.d("HttpRequest", "Full response body: $customerResponse")
+
+                        // Check if 'data' is null or empty
+                        if (customerResponse.data != null && customerResponse.data.isNotEmpty()) {
+                            // Return the data directly without transformation
+                            callback(customerResponse.data)
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback(emptyList()) // Return an empty list if no data is found
+                        }
+                    } ?: run {
+                        Log.w("HttpRequest", "Response body is null")
+                        callback(emptyList()) // Return empty list if response body is null
+                    }
+                } else {
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback(emptyList()) // Return empty list if the API call fails
+                }
+            }
+
+            override fun onFailure(call: Call<CustomerResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Customer request failed: ${t.message}")
+                callback(emptyList()) // Return empty list if the request fails
+            }
+        })
+    }
+
+    fun getVarian(callback: (List<Map<String, Any>>) -> Unit) {
+        Log.d("HttpRequest", "Sending stok request")
+        val call = apiRoutes.getVarian() // Assuming this is the correct Retrofit call
+        call.enqueue(object : retrofit2.Callback<VarianResponse> {
+            override fun onResponse(
+                call: Call<VarianResponse>,
+                response: Response<VarianResponse>
+            ) {
+                Log.d("HttpRequest", "Stok response received")
+
+                if (response.isSuccessful) {
+                    response.body()?.let { varianResponse ->
+                        Log.d("HttpRequest", "Full response body: $varianResponse")
+
+                        // Check if 'data' is null or empty
+                        if (varianResponse.data != null && varianResponse.data.isNotEmpty()) {
+                            // Return the data directly without transformation
+                            callback(varianResponse.data)
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback(emptyList()) // Return an empty list if no data is found
+                        }
+                    } ?: run {
+                        Log.w("HttpRequest", "Response body is null")
+                        callback(emptyList()) // Return empty list if response body is null
+                    }
+                } else {
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback(emptyList()) // Return empty list if the API call fails
+                }
+            }
+
+            override fun onFailure(call: Call<VarianResponse>, t: Throwable) {
                 Log.e("HttpRequest", "Stok request failed: ${t.message}")
                 callback(emptyList()) // Return empty list if the request fails
             }

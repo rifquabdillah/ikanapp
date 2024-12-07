@@ -4,7 +4,7 @@ import 'package:quickalert/quickalert.dart';
 import 'package:intl/intl.dart'; // Import intl
 
 class ConfirmationScreen extends StatelessWidget {
-  final Map<String, String> customerData;
+  final Map<String, dynamic> customerData; // Change to Map<String, dynamic>
   final List<Map<String, String>> orderList;
 
   const ConfirmationScreen({
@@ -18,7 +18,7 @@ class ConfirmationScreen extends StatelessWidget {
     final random = Random();
     final timestamp = DateTime.now().millisecondsSinceEpoch;  // Use timestamp for uniqueness
     final randomSuffix = random.nextInt(1000);  // Adding random suffix
-    return 'ORD-${timestamp.toString()}-${randomSuffix.toString()}';
+    return 'MJL-${timestamp.toString()}-${randomSuffix.toString()}';
   }
 
   @override
@@ -32,7 +32,7 @@ class ConfirmationScreen extends StatelessWidget {
         ? orderList.first['paymentStatus']!
         : 'Unknown';
 
-    final updatedCustomerData = Map<String, String>.from(customerData)
+    final updatedCustomerData = Map<String, dynamic>.from(customerData)
       ..['orderId'] = orderId;  // Add orderId to customerData
 
     return Scaffold(
@@ -78,20 +78,22 @@ class ConfirmationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCustomerInfo(Map<String, String> customerData) {
+  Widget _buildCustomerInfo(Map<String, dynamic> customerData) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildInfoRow("ID Order", customerData['orderId']),
-        _buildInfoRow("Nama", customerData['name']),
-        _buildInfoRow("Telepon", customerData['phone']),
-        _buildInfoRow("Alamat", customerData['address']),
+        _buildInfoRow("Nama", customerData['customerName']),
+        _buildInfoRow("Telepon", customerData['telepon']),
+        _buildInfoRow("Telepon", customerData['telepon2']),
+        _buildInfoRow("Alamat", customerData['alamat']),
+        _buildInfoRow("Patokan", customerData['patokan']),
         const SizedBox(height: 10),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String? value) {
+  Widget _buildInfoRow(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -105,7 +107,7 @@ class ConfirmationScreen extends StatelessWidget {
             ),
           ),
           Text(
-            value ?? "-",
+            value?.toString() ?? "-",
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
         ],
@@ -221,7 +223,6 @@ class ConfirmationScreen extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _buildConfirmButton(BuildContext context) {
     return SizedBox(
