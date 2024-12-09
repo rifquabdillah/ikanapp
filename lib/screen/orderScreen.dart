@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ikanapps/backend/nativeChannel.dart';
+import 'package:quickalert/models/quickalert_type.dart';
+import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'confirmationScreen.dart';
 
 class Orderscreen extends StatefulWidget {
@@ -14,9 +16,12 @@ class _OrderscreenState extends State<Orderscreen> {
   String? _selectedFish;
   String? _selectedSupplier;
   String? _selectedFishVariant;
-  String? _selectedFishCount;
   String? _quantity;
+  String? _count;
   String? _price;
+  String? _selectedProductCode;
+  String? _selectedShipment;
+  String? _selectedPayment;
 
   List<String> _fishVariants = [];
   final List<Map<String, String>> _orderList = [];
@@ -24,23 +29,32 @@ class _OrderscreenState extends State<Orderscreen> {
   Map<String, dynamic>? _selectedSupplierDetails;
 
 
+  String _calculateTotal() {
+    double count = double.tryParse(_count ?? '0') ?? 0; // Jumlah item
+    double price = double.tryParse(_price ?? '0') ?? 0; // Harga per unit
+    double quantity = double.tryParse(_quantity ?? '0') ?? 0; // Bobot per unit
+    double total = count * price * quantity; // Total harga berdasarkan semua faktor
+    return total.toStringAsFixed(0); // Mengembalikan nilai tanpa desimal
+  }
+
+
   Future<List<Map<String, dynamic>>> fetchCustomer() async {
     try {
-      print("Fetching stock data..."); // Debugging line
+      print("Fetching customer data...");
       var produkData = await NativeChannel.instance.fetchCustomer();
-      print("Data fetched: $produkData"); // Debugging
+      print("Data fetched: $produkData");
       return produkData;
     } catch (e) {
-      print("Error fetching stock data: $e");
+      print("Error fetching customer data: $e");
       return [];
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchStok() async {
     try {
-      print("Fetching stock data..."); // Debugging line
+      print("Fetching stock data...");
       var produkData = await NativeChannel.instance.fetchStok();
-      print("Data fetched: $produkData"); // Debugging
+      print("Data fetched: $produkData");
       return produkData;
     } catch (e) {
       print("Error fetching stock data: $e");
@@ -48,11 +62,59 @@ class _OrderscreenState extends State<Orderscreen> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchVarian() async {
+    try {
+      print("Fetching fish variant data...");
+      var produkData = await NativeChannel.instance.fetchVarian();
+      print("Data fetched: $produkData");
+      return produkData;
+    } catch (e) {
+      print("Error fetching data: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchBobot() async {
+    try {
+      print("Fetching fish weight data...");
+      var produkData = await NativeChannel.instance.fetchBobot();
+      print("Data fetched: $produkData");
+      return produkData;
+    } catch (e) {
+      print("Error fetching data: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchShipment() async {
+    try {
+      print("Fetching fish weight data...");
+      var produkData = await NativeChannel.instance.fetchShipment();
+      print("Data fetched: $produkData");
+      return produkData;
+    } catch (e) {
+      print("Error fetching data: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPayment() async {
+    try {
+      print("Fetching fish weight data...");
+      var produkData = await NativeChannel.instance.fetchPayment();
+      print("Data fetched: $produkData");
+      return produkData;
+    } catch (e) {
+      print("Error fetching data: $e");
+      return [];
+    }
+  }
+
+
 
   // Function to update fish variants based on selected fish
   void _updateFishVariants(String selectedFish) {
     setState(() {
-      // Simpan logika untuk memperbarui varian berdasarkan ikan yang dipilih dari data backend
       _fishVariants = ['Varian 1', 'Varian 2', 'Varian 3'];
     });
   }
@@ -78,210 +140,212 @@ class _OrderscreenState extends State<Orderscreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Customer Dropdown
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: fetchCustomer(),
+                future: fetchCustomer(), // Ambil data customer
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('No data available');
-                  } else {
-                    List<Map<String, dynamic>> supplierData = snapshot.data!;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        DropdownField<String>(
-                          value: _selectedSupplier,
-                          // Variable to store selected supplier
-                          items: supplierData.map((
-                              item) => item['nama'] as String).toList(),
-                          label: "Pilih Customer",
-                          itemLabel: (item) => item,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSupplier =
-                                  value; // Store selected supplier
-                              // Find and set details of the selected supplier
-                              _selectedSupplierDetails =
-                                  supplierData.firstWhere(
-                                        (item) => item['nama'] == value,
-                                    orElse: () => {},
-                                  );
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        if (_selectedSupplierDetails != null) ...[
-                          Container(
-                            margin: const EdgeInsets.only(top: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              "Telepon: ${_selectedSupplierDetails!['telepon'] ??
-                                  'Tidak tersedia'}",
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(top: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              "Telepon 2: ${_selectedSupplierDetails!['telepon2'] ??
-                                  'Tidak tersedia'}",
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(top: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              "Alamat: ${_selectedSupplierDetails!['alamat'] ??
-                                  'Tidak tersedia'}",
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(top: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              "Patokan: ${_selectedSupplierDetails!['patokan'] ??
-                                  'Tidak tersedia'}",
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ]
-                      ],
-                    );
+                  List<Map<String, dynamic>> customerData = snapshot.data ?? [];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Dropdown untuk memilih customer
+                      DropdownField<String>(
+                        value: _selectedSupplier,
+                        items: customerData.map((item) {
+                          return '${item['id']} - ${item['nama']}'; // Menampilkan ID dan nama customer di dropdown
+                        }).toList(),
+                        label: "Pilih Customer",
+                        itemLabel: (item) => item,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSupplier = value;
+                            // Mengambil detail customer berdasarkan ID dan nama yang dipilih
+                            _selectedSupplierDetails = customerData.firstWhere(
+                                  (item) =>
+                              '${item['id']} - ${item['nama']}' == value, // Mencocokkan ID dan nama untuk memilih data yang tepat
+                              orElse: () => {}, // Jika tidak ditemukan, return map kosong
+                            );
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Menampilkan detail customer yang dipilih
+                      _buildDetailContainer(
+                        "ID Customer",
+                        _selectedSupplierDetails?['id']?.toString() ?? '-',
+                      ),
+                      _buildDetailContainer(
+                        "Nama Customer",
+                        _selectedSupplierDetails?['nama'] ?? '-',
+                      ),
+                      _buildDetailContainer(
+                        "Telepon",
+                        _selectedSupplierDetails?['telepon'] ?? '-',
+                      ),
+                      _buildDetailContainer(
+                        "Telepon",
+                        _selectedSupplierDetails?['telepon2'] ?? '-',
+                      ),
+                      _buildDetailContainer(
+                        "Alamat",
+                        _selectedSupplierDetails?['alamat'] ?? '-',
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+
+
+              const SizedBox(height: 20),
+
+              // Fish Type Dropdown
+              FutureBuilder<List<Map<String, dynamic>>>(
+                  future: fetchStok(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Text('Tidak ada data stok tersedia.');
+                    } else {
+                      List<Map<String, dynamic>> stockData = snapshot.data ??
+                          [];
+                      return DropdownField<String>(
+                        value: _selectedFish,
+                        items: stockData.map((item) => item['nama'].toString())
+                            .toList(),
+                        label: "Pilih Ikan",
+                        itemLabel: (item) => item,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedFish = value;
+                            // Ambil kodeProduk berdasarkan nama ikan yang dipilih
+                            final selectedProduct = stockData.firstWhere(
+                                  (item) => item['nama'] == value,
+                            );
+                            _selectedProductCode =
+                                selectedProduct?['kodeProduk'] ?? '-';
+                          });
+                        },
+                      );
+                    }
                   }
+              ),
+
+
+              const SizedBox(height: 20),
+
+              // Fish Variant Dropdown
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchVarian(),
+                builder: (context, snapshot) {
+                  List<Map<String, dynamic>> variantData = snapshot.data ?? [];
+                  return DropdownField<String>(
+                    value: _selectedFishVariant,
+                    items: variantData.map((item) => item['nama'] as String)
+                        .toList(),
+                    label: "Pilih Varian Ikan",
+                    itemLabel: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFishVariant = value;
+                      });
+                    },
+                  );
                 },
               ),
 
               const SizedBox(height: 20),
 
-              // FutureBuilder for fetching fish stock
+              // Fish Weight Dropdown
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: fetchStok(),
+                future: fetchBobot(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    print("Loading..."); // Debugging line
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    print("Error: ${snapshot.error}"); // Debugging line
-                    return Text('Error: ${snapshot.error}');
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('No data available');
-                  } else {
-                    print("Fetched data: ${snapshot.data}"); // Debugging line
-                    List<Map<String, dynamic>> fishData = snapshot.data!;
-                    return DropdownField<String>(
-                      value: _selectedFish,
-                      items: fishData.map((item) => item['nama'] as String)
-                          .toList(),
-                      label: "Pilih Jenis Ikan",
-                      itemLabel: (item) => item,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedFish = value;
-                          _selectedFishVariant =
-                          null; // Reset variant when fish changes
-                          _updateFishVariants(
-                              value!); // Update variants based on selected fish
-                        });
-                      },
-                    );
-                  }
+                  List<Map<String, dynamic>> bobotData = snapshot.data ?? [];
+                  return DropdownField<String>(
+                    value: _quantity,
+                    items: bobotData.map((item) => item['bobot'] as String)
+                        .toList(),
+                    label: "Masukkan Bobot Ikan",
+                    itemLabel: (item) => item,
+                    onChanged: (value) {
+                      setState(() {
+                        _quantity = value;
+                      });
+                    },
+                  );
                 },
               ),
 
 
               const SizedBox(height: 20),
-              // Dropdown for Fish Variant
-              if (_selectedFish != null)
-                DropdownField<String>(
-                  value: _selectedFishVariant,
-                  items: _fishVariants,
-                  label: "Pilih Varian Ikan",
-                  itemLabel: (item) => item,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFishVariant = value;
-                    });
-                  },
-                ),
+              _buildCountField(),
+              const SizedBox(height: 20),
+              _buildPriceField(),
+              const SizedBox(height: 20),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchShipment(),
+                builder: (context, snapshot) {
+                  List<Map<String, dynamic>> shipmentData = snapshot.data ?? [];
+                  return DropdownField<String>(
+                    value: _selectedShipment,
+                    items: shipmentData
+                        .map((item) => item['shipment'] ?? 'Unknown')  // Ensure it's a String
+                        .toList()
+                        .cast<String>(),  // Cast the List<dynamic> to List<String>
+                    label: "Shipment",
+                    itemLabel: (item) => item,  // Assuming you want to display the shipment text
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedShipment = value;
+                      });
+                    },
+                  );
+                },
+              ),
+
+
+
               const SizedBox(height: 20),
 
-              // TextField for Quantity
-              if (_selectedFishVariant != null)
-                _buildQuantityField(),
+// Payment Dropdown
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchPayment(),
+                builder: (context, snapshot) {
+                  List<Map<String, dynamic>> paymentData = snapshot.data ?? [];
+                  return DropdownField<String>(
+                    value: _selectedPayment,
+                    items: paymentData
+                        .map((item) => item['payment'] ?? 'Unknown')  // Ensure it's a String
+                        .toList()
+                        .cast<String>(),  // Cast the List<dynamic> to List<String>
+                    label: "Payment",
+                    itemLabel: (item) => item,  // Assuming you want to display the shipment text
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedPayment = value;
+                      });
+                    },
+                  );
+                },
+              ),
 
-              const SizedBox(height: 20),
-              // TextField for Price
-              if (_quantity != null)
-                _buildPriceField(),
+
+
 
               const SizedBox(height: 15),
-              // Button to Add Order
               _buildAddOrderButton(),
-
               const SizedBox(height: 20),
-              // Order Summary
+
               const Text("Pesanan",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               _buildOrderTable(),
-
               const SizedBox(height: 10),
-              // Confirmation Button
-              _buildConfirmationButton(),
+              _buildConfirmationButton(context),
             ],
           ),
         ),
@@ -289,12 +353,12 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 
-  Widget _buildQuantityField() {
+  Widget _buildCountField() {
     return TextField(
       keyboardType: TextInputType.number,
       onChanged: (value) {
         setState(() {
-          _quantity = value;
+          _count = value; // Menyimpan jumlah yang dimasukkan
         });
       },
       decoration: const InputDecoration(
@@ -319,6 +383,30 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 
+  Widget _buildDetailContainer(String label, String? value) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        "$label: ${value ?? 'Tidak tersedia'}",
+        style: const TextStyle(fontSize: 16),
+      ),
+    );
+  }
+
+  // Add the order to the list if all fields are filled
   Widget _buildAddOrderButton() {
     return SizedBox(
       width: double.infinity,
@@ -327,6 +415,7 @@ class _OrderscreenState extends State<Orderscreen> {
           if (_selectedFish != null &&
               _selectedFishVariant != null &&
               _quantity != null &&
+              _count != null &&
               _price != null) {
             _addOrder();
 
@@ -335,6 +424,7 @@ class _OrderscreenState extends State<Orderscreen> {
               _selectedFish = null;
               _selectedFishVariant = null;
               _quantity = null;
+              _count = null;
               _price = null;
             });
           } else {
@@ -361,14 +451,17 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 
-
   void _addOrder() {
     setState(() {
       _orderList.add({
         'fish': _selectedFish!,
         'variant': _selectedFishVariant!,
         'quantity': _quantity!,
+        'count': _count!,
         'price': _price!,
+        'shipment':_selectedShipment!,
+        'payment':_selectedPayment!,
+
       });
     });
   }
@@ -384,84 +477,30 @@ class _OrderscreenState extends State<Orderscreen> {
         final order = _orderList[index];
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
-          // Margin for spacing between cards
           child: Card(
             elevation: 2,
-            color: const Color(0xffFAF9F6), // Card background color
+            color: const Color(0xffFAF9F6),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Customer name
                   Text(
-                    "Nama Customer: ${_selectedSupplier ?? 'Belum dipilih'}",
+                    "ID Customer: ${_selectedSupplierDetails?['id'] ?? '-'}",
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  const SizedBox(height: 8),
-
-                  // Row for Fish and Variant with Qty and Price aligned to the right
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    // Align items between left and right
-                    children: [
-                      // Left side: Fish and Variant
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Ikan ${order['fish'] ?? 'Unknown Fish'}",
-                            style: const TextStyle(fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins'),
-                          ),
-                          Text(
-                            "${order['variant'] ?? 'Unknown Variant'}",
-                            style: const TextStyle(fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins'),
-                          ),
-                        ],
-                      ),
-
-                      // Right side: Qty and Price
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${order['quantity'] ?? '0'} kg',
-                            // Display quantity with kg
-                            style: const TextStyle(fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w500),
-                          ),
-
-                          const SizedBox(height: 8),
-                          // Space between quantity and price
-                          Text(
-                            'Rp.${order['price']?.toString() ?? '0'}',
-                            // Display price
-                            style: const TextStyle(fontSize: 14,
-                                color: Colors.teal,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // Additional details (like fish code or specific order info)
                   Text(
-                    'Detail: ${order['detail'] ??
-                        'No active period available'}',
-                    // Display additional details
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xff909EAE)),
+                    "Kode Customer: ${_selectedSupplierDetails?['kodeCustomer'] ?? '-'}",
                   ),
+                  Text("Nama Customer: ${_selectedSupplier ?? 'Belum dipilih'}"),
+                  const SizedBox(height: 8),
+                  Text("Jenis Ikan: ${order['fish']}"),
+                  Text("Varian Ikan: ${order['variant']}"),
+                  Text("Jumlah: ${order['quantity']}"),
+                  Text("Harga Total: ${_calculateTotal()}"),
+                  Text("Shipment: ${order['shipment']}"),
+                  Text("Payment: ${order['payment']}"),
                 ],
               ),
             ),
@@ -471,79 +510,81 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 
-  Widget _buildConfirmationButton() {
+  Widget _buildConfirmationButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _orderList.isEmpty
-            ? null
-            : () {
-          // Prepare the customer data and order list to pass
-          Map<String, String> customerData = {
-            'customerName': _selectedSupplier ?? 'Unknown',  // Ensure the value is a String
-            'customerDetails': _selectedSupplierDetails.toString(), // Convert to String if necessary
-            'telepon': _selectedSupplierDetails?['telepon'] ?? 'Tidak tersedia',
-            'telepon2': _selectedSupplierDetails?['telepon2'] ?? 'Tidak tersedia',
-            'alamat': _selectedSupplierDetails?['alamat'] ?? 'Tidak tersedia',
-            'patokan': _selectedSupplierDetails?['patokan'] ?? 'Tidak tersedia',
-          };
-
-          // Navigate to confirmation screen
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ConfirmationScreen(
-                orderList: _orderList, // Passing the order list
-                customerData: customerData, // Passing the customer data
+        onPressed: () {
+          if (_selectedSupplier == null || _selectedSupplier!.isEmpty) {
+            // Tampilkan peringatan jika supplier belum dipilih
+            QuickAlert.show(
+              context: context,
+              type: QuickAlertType.error,
+              title: 'Oops...',
+              text: 'Silakan pilih supplier terlebih dahulu.',
+            );
+          } else {
+            // Navigasi ke ConfirmationScreen dengan data
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ConfirmationScreen(
+                  customerData: {
+                    'Nama Customer': _selectedSupplier ?? 'Unknown', // Directly passing the customer name
+                    'item': _orderList.isNotEmpty ? _orderList.first['fish'] ?? 'Unknown Fish' : 'Unknown Fish', // Directly passing the item (fish)
+                    'variant': _orderList.isNotEmpty ? _orderList.first['variant'] ?? 'Unknown Variant' : 'Unknown Variant', // Variant
+                    'quantity': _orderList.isNotEmpty ? _orderList.first['quantity'] ?? '0' : '0', // Quantity
+                    'price': _orderList.isNotEmpty ? _orderList.first['price'] ?? '0' : '0', // Price
+                    'shipment': _orderList.isNotEmpty ? _orderList.first['shipment'] ?? 'Unknown Shipment' : 'Unknown Shipment', // Shipment
+                    'payment': _orderList.isNotEmpty ? _orderList.first['payment'] ?? 'Unknown Payment' : 'Unknown Payment', // Payment
+                  },
+                  totalHarga: _orderList.isNotEmpty ? _calculateTotal() : '0', // Total price calculation
+                  tanggalTransaksi: DateTime.now().toString(), // Current date as the transaction date
+                ),
               ),
-            ),
-          );
+            );
+
+
+
+          }
         },
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          backgroundColor: const Color(0xFF6693be),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Montserrat',
-          ),
-        ),
-        child: const Text("Konfirmasi Pesanan"),
+        child: const Text("Konfirmasi Transaksi"),
       ),
     );
   }
+}
 
+  class DropdownField<T> extends StatelessWidget {
+  final String? value;
+  final List<String> items;
+  final String label;
+  final Function(String) itemLabel;
+  final Function(String?) onChanged;
 
+  const DropdownField({
+    Key? key,
+    required this.value,
+    required this.items,
+    required this.label,
+    required this.itemLabel,
+    required this.onChanged,
+  }) : super(key: key);
 
-
-
-  Widget DropdownField<T>({
-    required T? value,
-    required List<T> items,
-    required String label,
-    required ValueChanged<T?>? onChanged,
-    required String Function(T) itemLabel,
-    bool isEnabled = true,
-  }) {
-    return DropdownButtonFormField<T>(
-        value: value,
-        items: items.map((item) {
-          return DropdownMenuItem<T>(
-            value: item,
-            child: Text(itemLabel(item)),
-          );
-        }).toList(),
-        onChanged: isEnabled ? onChanged : null,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        )
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+      ),
+      onChanged: onChanged,
+      items: items.map((String item) {
+        return DropdownMenuItem<String>(
+          value: item,
+          child: Text(itemLabel(item)),
+        );
+      }).toList(),
     );
   }
-
 }

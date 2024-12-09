@@ -43,6 +43,26 @@ class HttpRequest(private val context: Context) {
         val data: List<Map<String, Any>> // The response contains a list of Fish objects.
     )
 
+    data class ShipmentResponse(
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
+    )
+
+    data class PaymentResponse(
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
+    )
+
+    data class BobotResponse(
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
+    )
+
+    data class SaveOrderResponse(
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
+    )
+
+    data class GetOrderResponse(
+        val data: List<Map<String, Any>> // The response contains a list of Fish objects.
+    )
+
     fun login(
         username: String,
         password: String,
@@ -117,8 +137,6 @@ class HttpRequest(private val context: Context) {
         })
     }
 
-
-    // Ensure you're not accessing invalid indices by checking the list size
     fun getSupplier(callback: (List<Map<String, Any>>) -> Unit) {
         Log.d("HttpRequest", "Sending stok request")
         val call = apiRoutes.getSupplier() // Assuming this is the correct Retrofit call
@@ -230,6 +248,226 @@ class HttpRequest(private val context: Context) {
             }
 
             override fun onFailure(call: Call<VarianResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Stok request failed: ${t.message}")
+                callback(emptyList()) // Return empty list if the request fails
+            }
+        })
+    }
+
+    fun getBobot(callback: (List<Map<String, Any>>) -> Unit) {
+        Log.d("HttpRequest", "Sending stok request")
+        val call = apiRoutes.getBobot() // Assuming this is the correct Retrofit call
+        call.enqueue(object : retrofit2.Callback<BobotResponse> {
+            override fun onResponse(
+                call: Call<BobotResponse>,
+                response: Response<BobotResponse>
+            ) {
+                Log.d("HttpRequest", "Stok response received")
+
+                if (response.isSuccessful) {
+                    response.body()?.let { bobotResponse ->
+                        Log.d("HttpRequest", "Full response body: $bobotResponse")
+
+                        // Check if 'data' is null or empty
+                        if (bobotResponse.data != null && bobotResponse.data.isNotEmpty()) {
+                            // Return the data directly without transformation
+                            callback(bobotResponse.data)
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback(emptyList()) // Return an empty list if no data is found
+                        }
+                    } ?: run {
+                        Log.w("HttpRequest", "Response body is null")
+                        callback(emptyList()) // Return empty list if response body is null
+                    }
+                } else {
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback(emptyList()) // Return empty list if the API call fails
+                }
+            }
+
+            override fun onFailure(call: Call<BobotResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Stok request failed: ${t.message}")
+                callback(emptyList()) // Return empty list if the request fails
+            }
+        })
+    }
+
+    fun saveOrder(
+        id: String,
+        kodeCustomer: String,
+        kodeProduk: String,
+        jumlahPesanan: String,
+        hargaKg: String,
+        shipment: String,
+        payment: String,
+        totalPenerimaan: String,
+        callback: (List<Map<String, Any>>) -> Unit
+    ) {
+        Log.d("HttpRequest", "Sending order request")
+
+        // Create the request body as a map
+        val orderData = mapOf(
+            "id" to id,
+            "kodeCustomer" to kodeCustomer,
+            "kodeProduk" to kodeProduk,
+            "jumlahPesanan" to jumlahPesanan,
+            "hargaKg" to hargaKg,
+            "shipment" to shipment,
+            "payment" to payment,
+            "totalPenerimaan" to totalPenerimaan
+        )
+
+        // Assuming apiRoutes.saveOrder() is a Retrofit method that expects a map of order data
+        val call = apiRoutes.saveOrder(orderData) // Pass the order data as parameter
+
+        call.enqueue(object : retrofit2.Callback<SaveOrderResponse> {
+            override fun onResponse(
+                call: Call<SaveOrderResponse>,
+                response: Response<SaveOrderResponse>
+            ) {
+                Log.d("HttpRequest", "Order response received")
+
+                if (response.isSuccessful) {
+                    response.body()?.let { saveOrderResponse ->
+                        Log.d("HttpRequest", "Full response body: $saveOrderResponse")
+
+                        // Check if 'data' is null or empty
+                        if (saveOrderResponse.data != null && saveOrderResponse.data.isNotEmpty()) {
+                            // Return the data directly if it's not null or empty
+                            callback(saveOrderResponse.data)
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback(emptyList()) // Return an empty list if no data is found
+                        }
+                    } ?: run {
+                        Log.w("HttpRequest", "Response body is null")
+                        callback(emptyList()) // Return empty list if response body is null
+                    }
+                } else {
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback(emptyList()) // Return empty list if the API call fails
+                }
+            }
+
+            override fun onFailure(call: Call<SaveOrderResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Order request failed: ${t.message}")
+                callback(emptyList()) // Return empty list if the request fails
+            }
+        })
+    }
+
+    fun getOrder(callback: (List<Map<String, Any>>) -> Unit) {
+        Log.d("HttpRequest", "Sending stok request")
+        val call = apiRoutes.getOrder() // Assuming this is the correct Retrofit call
+        call.enqueue(object : retrofit2.Callback<GetOrderResponse> {
+            override fun onResponse(
+                call: Call<GetOrderResponse>,
+                response: Response<GetOrderResponse>
+            ) {
+                Log.d("HttpRequest", "Stok response received")
+
+                if (response.isSuccessful) {
+                    response.body()?.let { getOrderResponse ->
+                        Log.d("HttpRequest", "Full response body: $getOrderResponse")
+
+                        // Check if 'data' is null or empty
+                        if (getOrderResponse.data != null && getOrderResponse.data.isNotEmpty()) {
+                            // Return the data directly without transformation
+                            callback(getOrderResponse.data)
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback(emptyList()) // Return an empty list if no data is found
+                        }
+                    } ?: run {
+                        Log.w("HttpRequest", "Response body is null")
+                        callback(emptyList()) // Return empty list if response body is null
+                    }
+                } else {
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback(emptyList()) // Return empty list if the API call fails
+                }
+            }
+
+            override fun onFailure(call: Call<GetOrderResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Stok request failed: ${t.message}")
+                callback(emptyList()) // Return empty list if the request fails
+            }
+        })
+    }
+
+    fun getShipment(callback: (List<Map<String, Any>>) -> Unit) {
+        Log.d("HttpRequest", "Sending stok request")
+        val call = apiRoutes.getShipment() // Assuming this is the correct Retrofit call
+        call.enqueue(object : retrofit2.Callback<ShipmentResponse> {
+            override fun onResponse(
+                call: Call<ShipmentResponse>,
+                response: Response<ShipmentResponse>
+            ) {
+                Log.d("HttpRequest", "Stok response received")
+
+                if (response.isSuccessful) {
+                    response.body()?.let { shipmentResponse ->
+                        Log.d("HttpRequest", "Full response body: $shipmentResponse")
+
+                        // Check if 'data' is null or empty
+                        if (shipmentResponse.data != null && shipmentResponse.data.isNotEmpty()) {
+                            // Return the data directly without transformation
+                            callback(shipmentResponse.data)
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback(emptyList()) // Return an empty list if no data is found
+                        }
+                    } ?: run {
+                        Log.w("HttpRequest", "Response body is null")
+                        callback(emptyList()) // Return empty list if response body is null
+                    }
+                } else {
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback(emptyList()) // Return empty list if the API call fails
+                }
+            }
+
+            override fun onFailure(call: Call<ShipmentResponse>, t: Throwable) {
+                Log.e("HttpRequest", "Stok request failed: ${t.message}")
+                callback(emptyList()) // Return empty list if the request fails
+            }
+        })
+    }
+
+    fun getPayment(callback: (List<Map<String, Any>>) -> Unit) {
+        Log.d("HttpRequest", "Sending stok request")
+        val call = apiRoutes.getPayment() // Assuming this is the correct Retrofit call
+        call.enqueue(object : retrofit2.Callback<PaymentResponse> {
+            override fun onResponse(
+                call: Call<PaymentResponse>,
+                response: Response<PaymentResponse>
+            ) {
+                Log.d("HttpRequest", "Stok response received")
+
+                if (response.isSuccessful) {
+                    response.body()?.let { paymentResponse ->
+                        Log.d("HttpRequest", "Full response body: $paymentResponse")
+
+                        // Check if 'data' is null or empty
+                        if (paymentResponse.data != null && paymentResponse.data.isNotEmpty()) {
+                            // Return the data directly without transformation
+                            callback(paymentResponse.data)
+                        } else {
+                            Log.w("HttpRequest", "Data list is empty or null in response")
+                            callback(emptyList()) // Return an empty list if no data is found
+                        }
+                    } ?: run {
+                        Log.w("HttpRequest", "Response body is null")
+                        callback(emptyList()) // Return empty list if response body is null
+                    }
+                } else {
+                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
+                    callback(emptyList()) // Return empty list if the API call fails
+                }
+            }
+
+            override fun onFailure(call: Call<PaymentResponse>, t: Throwable) {
                 Log.e("HttpRequest", "Stok request failed: ${t.message}")
                 callback(emptyList()) // Return empty list if the request fails
             }

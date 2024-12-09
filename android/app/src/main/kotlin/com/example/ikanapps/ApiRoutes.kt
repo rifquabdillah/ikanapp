@@ -44,4 +44,23 @@ interface ApiRoutes {
     fun getVarian(
     ): Call<HttpRequest.VarianResponse>
 
+    @GET("shipment")
+    fun getShipment(
+    ): Call<HttpRequest.ShipmentResponse>
+
+    @GET("payment")
+    fun getPayment(
+    ): Call<HttpRequest.PaymentResponse>
+
+    @GET("bobot")
+    fun getBobot(
+    ): Call<HttpRequest.BobotResponse>
+
+    @GET("save")
+    fun saveOrder(
+    ): Call<HttpRequest.SaveOrderResponse>
+
+    @GET("get-order")
+    fun getOrder(
+    ): Call<HttpRequest.GetOrderResponse>
 }

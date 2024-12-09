@@ -14,6 +14,13 @@ class NativeChannel {
   static const USERS_CHANNEL = MethodChannel('com.example.ikanapps/users_channel');
   static const SUPPLIER_CHANNEL = MethodChannel('com.example.ikanapps/supplier_channel');
   static const VARIAN_CHANNEL = MethodChannel('com.example.ikanapps/varian_channel');
+  static const ORDER_CHANNEL = MethodChannel('com.example.ikanapps/order_channel');
+  static const BOBOT_CHANNEL = MethodChannel('com.example.ikanapps/bobot_channel');
+  static const SAVE_ORDER_CHANNEL = MethodChannel('com.example.ikanapps/save_order_channel');
+  static const GET_ORDER_CHANNEL = MethodChannel('com.example.ikanapps/get_order_channel');
+  static const SHIPMENT_CHANNEL = MethodChannel('com.example.ikanapps/shipment_channel');
+  static const PAYMENT_CHANNEL = MethodChannel('com.example.ikanapps/payment_channel');
+
 
   void initialize() {
     print('NativeChannel initialized');
@@ -78,27 +85,6 @@ class NativeChannel {
       // Handle exceptions and errors
       print("Error fetching stock data: $e");
       return [];
-    }
-  }
-  // Fungsi untuk mendapatkan data stok
-  Future<Map<String, dynamic>> getStok(String nama,String varian,String ukuran, String harga) async {
-    try {
-      final result = await PRODUK_CHANNEL.invokeMethod('getStock', {
-        'nama': nama,
-        'varian': varian,
-        'ukuran' : ukuran,
-        'harga': harga,
-      });
-
-      // Pastikan hasilnya berupa String JSON
-      if (result is String) {
-        return jsonDecode(result); // Parsing JSON menjadi Map
-      } else {
-        throw 'Expected a JSON string but received: ${result.runtimeType}';
-      }
-    } on PlatformException catch (e) {
-      print('Failed to fetch stok: ${e.message}');
-      throw 'Failed to fetch stok: ${e.message}';
     }
   }
 
@@ -174,6 +160,30 @@ class NativeChannel {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchBobot() async {
+    try {
+      // Invoke the platform channel to fetch stock data
+      final result = await BOBOT_CHANNEL.invokeMethod('fetchBobot');
+
+      // Parse the result into a list of maps
+      if (result is List) {
+        return List<Map<String, dynamic>>.from(result.map((item) {
+          if (item is Map) {
+            return Map<String, dynamic>.from(item);
+          } else {
+            throw FormatException("Invalid item format in result");
+          }
+        }));
+      } else {
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
+      }
+    } catch (e) {
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchUser() async {
     try {
       // Invoke the platform channel to fetch stock data
@@ -200,5 +210,167 @@ class NativeChannel {
     }
   }
 
+  Future<String> saveOrder({
+    required Map<String, dynamic> customerData,
+    required List<Map<String, dynamic>> orderList,
+    required String totalHarga,
+    required String tanggalTransaksi,
+  }) async {
+    // Check for null or empty parameters and handle them accordingly
+    if (customerData.isEmpty) {
+      throw 'Customer data cannot be empty';
+    }
+
+    if (orderList.isEmpty) {
+      throw 'Order list cannot be empty';
+    }
+
+    if (totalHarga.isEmpty) {
+      throw 'Total harga cannot be empty';
+    }
+
+    if (tanggalTransaksi.isEmpty) {
+      throw 'Tanggal transaksi cannot be empty';
+    }
+
+    try {
+      // Call the native method only if all parameters are valid
+      final result = await SAVE_ORDER_CHANNEL.invokeMethod('saveOrder', {
+        'customerData': customerData,
+        'orderList': orderList,
+      });
+
+      // Check if the result is a String
+      if (result is String) {
+        return result; // Return the success or error message from native
+      } else {
+        throw 'Expected a String but received: ${result.runtimeType}';
+      }
+    } on PlatformException catch (e) {
+      print('Failed to save order: ${e.message}');
+      throw 'Failed to save order: ${e.message}';
+    } catch (e) {
+      print('Error saving order: $e');
+      throw 'Error saving order: $e';
+    }
+  }
+
+
+
+
+  Future<List<Map<String, dynamic>>> getOrder() async {
+    try {
+      // Invoke the platform channel to fetch order data
+      final result = await GET_ORDER_CHANNEL.invokeMethod('getOrder');
+
+      // Log the raw result for debugging
+      print("Raw result from native code: $result");
+
+      // Check if the result is a list
+      if (result is List) {
+        List<Map<String, dynamic>> userList = [];
+        for (var item in result) {
+          if (item is Map) {
+            // Add each map to the userList after ensuring it's a valid map
+            userList.add(Map<String, dynamic>.from(item));
+          } else {
+            // Log unexpected item types
+            print("Unexpected item format in result: $item");
+            throw FormatException("Invalid item format in result");
+          }
+        }
+        return userList;
+      } else {
+        // Log the type of result returned if it's not a List
+        print("Expected a List, but got: ${result.runtimeType}");
+        throw FormatException("Expected a List, but got: ${result.runtimeType}");
+      }
+    } catch (e) {
+      // Log the error for debugging
+      print("Error fetching order data: $e");
+      return [];
+    }
+  }
+
+
+  Future<List<Map<String, dynamic>>> saveStock(stock) async {
+    try {
+      // Invoke the platform channel to fetch stock data
+      final result = await PRODUK_CHANNEL.invokeMethod('saveStock');
+
+      // Parse the result into a list of maps
+      if (result is List) {
+        List<Map<String, dynamic>> userList = [];
+        for (var item in result) {
+          if (item is Map) {
+            userList.add(Map<String, dynamic>.from(item));
+          } else {
+            throw FormatException("Invalid item format in result");
+          }
+        }
+        return userList;
+      } else {
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
+      }
+    } catch (e) {
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchShipment() async {
+    try {
+      // Invoke the platform channel to fetch stock data
+      final result = await SHIPMENT_CHANNEL.invokeMethod('fetchShipment');
+
+      // Parse the result into a list of maps
+      if (result is List) {
+        return List<Map<String, dynamic>>.from(result.map((item) {
+          if (item is Map) {
+            return Map<String, dynamic>.from(item);
+          } else {
+            throw FormatException("Invalid item format in result");
+          }
+        }));
+      } else {
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
+      }
+    } catch (e) {
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
+
+  Future<List<Map<String, dynamic>>> fetchPayment() async {
+    try {
+      // Invoke the platform channel to fetch stock data
+      final result = await PAYMENT_CHANNEL.invokeMethod('fetchPayment');
+
+      // Parse the result into a list of maps
+      if (result is List) {
+        return List<Map<String, dynamic>>.from(result.map((item) {
+          if (item is Map) {
+            return Map<String, dynamic>.from(item);
+          } else {
+            throw FormatException("Invalid item format in result");
+          }
+        }));
+      } else {
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
+      }
+    } catch (e) {
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
+
+
 
 }
+
+

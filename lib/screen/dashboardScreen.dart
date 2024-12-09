@@ -170,124 +170,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: const Color(0xffe3f2f7),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Latest Orders",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${customerData['name'] ?? 'Unknown'}",
-                            style: const TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat', fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 0),
-                          if (orderList.isNotEmpty)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Pesanan :",
-                                  style: TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat', fontWeight: FontWeight.w600),
-                                ),
-                                Row(
-                                  children: [
-                                    for (int i = 0; i < orderList.length ~/ 2; i++)
-                                      Padding(
-                                        padding: const EdgeInsets.only(right: 8.0),
-                                        child: Text(
-                                          orderList[i]['fish'] ?? 'Unknown Fish',
-                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat'),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    for (int i = orderList.length ~/ 2; i < orderList.length; i++)
-                                      Padding(
-                                        padding: const EdgeInsets.only(right: 8.0),
-                                        child: Text(
-                                          orderList[i]['fish'] ?? 'Unknown Fish',
-                                          style: const TextStyle(fontSize: 14, fontFamily: 'Montserrat'),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            )
-                          else
-                            const Text(
-                              "No orders yet",
-                              style: TextStyle(fontSize: 14, color: Colors.black87, fontFamily: 'Montserrat'),
-                            ),
-                          const SizedBox(height: 8),
-                          if (orderList.isNotEmpty)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: _getShipmentStatusColor(orderList.first['shipmentStatus']).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    orderList.first['shipmentStatus'] ?? 'Unknown',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: _getShipmentStatusColor(orderList.first['shipmentStatus']),
-                                      fontFamily: 'Montserrat',
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: _getPaymentStatusColor(orderList.first['paymentStatus']).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    orderList.first['paymentStatus'] ?? 'Unknown',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: _getPaymentStatusColor(orderList.first['paymentStatus']),
-                                      fontFamily: 'Montserrat',
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.history, color: Colors.blue),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const OrderHistoryScreen(
-                                customerData: customerData,
-                                orderList: orderList,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
                 ),
               )
             ],
@@ -364,7 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 leading: const Icon(Icons.history),
                 title: const Text('Order History'),
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderHistoryScreen(customerData: {}, orderList: [],)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderHistoryScreen()));
                 },
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ikanapps/backend/nativeChannel.dart';
 
 class StockManagementScreen extends StatefulWidget {
   const StockManagementScreen({Key? key}) : super(key: key);
@@ -8,60 +9,64 @@ class StockManagementScreen extends StatefulWidget {
 }
 
 class _StockManagementScreenState extends State<StockManagementScreen> {
+  late Future<List<Map<String, dynamic>>> _futureStock;
+  List<Map<String, dynamic>> _stockList = [];
 
-  final List<Map<String, dynamic>> _stockList = [
-    {"fish": "Ikan Lele", "quantity": 100},
-    {"fish": "Ikan Nila", "quantity": 50},
-    {"fish": "Ikan Gurame", "quantity": 30},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _futureStock = fetchStock();
+  }
 
-  void _addStock(String fishName, int quantity) {
+  Future<List<Map<String, dynamic>>> fetchStock() async {
+    try {
+      var produkData = await NativeChannel.instance.fetchStok();
+      return produkData.map((stock) {
+        return {
+          "nama": stock['nama'],
+          "quantity": int.tryParse(stock['quantity'].toString()) ?? 0,
+        };
+      }).toList();
+    } catch (e) {
+      debugPrint("Error fetching stock data: $e");
+      return [];
+    }
+  }
+
+
+
+  void _editStock(int index, String newName, int newQuantity) {
     setState(() {
-      final index = _stockList.indexWhere((stock) => stock['fish'] == fishName);
-      if (index >= 0) {
-        _stockList[index]['quantity'] += quantity;
-      } else {
-        _stockList.add({"fish": fishName, "quantity": quantity});
-      }
+      _stockList[index]['nama'] = newName;
+      _stockList[index]['quantity'] = newQuantity;
     });
   }
 
-  void _reduceStock(String fishName, int quantity) {
-    setState(() {
-      final index = _stockList.indexWhere((stock) => stock['fish'] == fishName);
-      if (index >= 0) {
-        _stockList[index]['quantity'] -= quantity;
-        if (_stockList[index]['quantity'] < 0) {
-          _stockList[index]['quantity'] = 0;
-        }
-      }
-    });
-  }
-
-  void _showAddStockDialog() {
-    String? fishName;
-    int? quantity;
-
+  void _showStockDialog({
+    required String title,
+    String? initialName,
+    int? initialQuantity,
+    required void Function(String, int) onSubmit,
+  }) {
+    final nameController = TextEditingController(text: initialName ?? '');
+    final quantityController =
+    TextEditingController(text: initialQuantity?.toString() ?? '');
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Tambah Stok"),
+          title: Text(title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: nameController,
                 decoration: const InputDecoration(labelText: "Nama Ikan"),
-                onChanged: (value) {
-                  fishName = value.trim();
-                },
               ),
               TextField(
+                controller: quantityController,
                 decoration: const InputDecoration(labelText: "Jumlah (Kg)"),
                 keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  quantity = int.tryParse(value);
-                },
               ),
             ],
           ),
@@ -72,8 +77,10 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (fishName != null && fishName!.isNotEmpty && quantity != null && quantity! > 0) {
-                  _addStock(fishName!, quantity!);
+                final name = nameController.text.trim();
+                final quantity = int.tryParse(quantityController.text.trim());
+                if (name.isNotEmpty && quantity != null && quantity > 0) {
+                  onSubmit(name, quantity);
                   Navigator.pop(context);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -81,7 +88,7 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
                   );
                 }
               },
-              child: const Text("Tambah"),
+              child: const Text("Simpan"),
             ),
           ],
         );
@@ -99,49 +106,63 @@ class _StockManagementScreenState extends State<StockManagementScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Daftar Stok",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: _stockList.isNotEmpty
-                  ? ListView.builder(
-                itemCount: _stockList.length,
-                itemBuilder: (context, index) {
-                  final stock = _stockList[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      title: Text(
-                        stock['fish'],
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      trailing: Text(
-                        "${stock['quantity']} Kg",
-                        style: const TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _futureStock,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text("Terjadi kesalahan: ${snapshot.error}"),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text("Belum ada data stok."));
+            }
+
+            _stockList = snapshot.data!; // Simpan data ke state lokal
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Daftar Stok",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _stockList.length,
+                    itemBuilder: (context, index) {
+                      final stock = _stockList[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ListTile(
+                          title: Text(
+                            stock['nama'],
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          trailing: Text(
+                            "${stock['quantity']} Kg",
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () => _showStockDialog(
+                            title: "Edit Stok",
+                            initialName: stock['nama'],
+                            initialQuantity: stock['quantity'],
+                            onSubmit: (newName, newQuantity) =>
+                                _editStock(index, newName, newQuantity),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              )
-                  : const Center(
-                child: Text("Belum ada data stok."),
-              ),
-            ),
-          ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddStockDialog,
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.add),
       ),
     );
   }
