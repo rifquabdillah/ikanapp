@@ -11,6 +11,7 @@ class MainActivity : FlutterActivity() {
     private val httpRequest = HttpRequest(this)
     private val AKUN_CHANNEL = "com.example.ikanapps/akun_channel"
     private val ORDER_CHANNEL = "com.example.ikanapps/order_channel"
+    private val USERS_CHANNEL = "com.example.ikanapps/users_channel"
     private val CUSTOMER_CHANNEL = "com.example.ikanapps/customer_channel"
     private val PRODUK_CHANNEL = "com.example.ikanapps/produk_channel"
     private val SUPPLIER_CHANNEL = "com.example.ikanapps/supplier_channel"
@@ -61,6 +62,60 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "fetchStok" -> {
                         httpRequest.getStok { response ->
+                            try {
+                                // Assuming response is already a List<Map<String, Any>>
+                                if (response is List<*>) {
+                                    val stokList = response.filterIsInstance<Map<String, Any>>()
+                                    if (stokList.isNotEmpty()) {
+                                        result.success(stokList) // Return the list to Flutter
+                                    } else {
+                                        result.error("EMPTY_DATA", "No valid stok data found", null)
+                                    }
+                                } else {
+                                    result.error("INVALID_RESPONSE", "Response is not a valid List<Map<String, Any>>", null)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("HttpRequest", "Error processing response", e)
+                                result.error("ERROR", "Failed to process response", null)
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, USERS_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "fetchUser" -> {
+                        httpRequest.getUser { response ->
+                            try {
+                                // Assuming response is already a List<Map<String, Any>>
+                                if (response is List<*>) {
+                                    val userList = response.filterIsInstance<Map<String, Any>>()
+                                    if (userList.isNotEmpty()) {
+                                        result.success(userList) // Return the list to Flutter
+                                    } else {
+                                        result.error("EMPTY_DATA", "No valid user data found", null)
+                                    }
+                                } else {
+                                    result.error("INVALID_RESPONSE", "Response is not a valid List<Map<String, Any>>", null)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("HttpRequest", "Error processing response", e)
+                                result.error("ERROR", "Failed to process response", null)
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ORDER_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "fetchOrder" -> {
+                        httpRequest.getOrder { response ->
                             try {
                                 // Assuming response is already a List<Map<String, Any>>
                                 if (response is List<*>) {
@@ -224,47 +279,36 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SAVE_ORDER_CHANNEL)
             .setMethodCallHandler { call, result ->
-                // Get the parameters from the method call
-                val id = call.argument<String>("id")
-                val kodeCustomer = call.argument<String>("kodeCustomer")
-                val kodeProduk = call.argument<String>("kodeProduk")
-                val jumlahPesanan = call.argument<String>("jumlahPesanan")
-                val hargaKg = call.argument<String>("hargaKg")
-                val shipment = call.argument<String>("shipment")
-                val payment = call.argument<String>("payment")
-                val totalPenerimaan = call.argument<String>("totalPenerimaan")
+                when (call.method) {
+                    "saveOrder" -> {
+                        val customerData = call.argument<Map<String, String>>("customerData")
+                        val orderList = call.argument<List<Map<String, String>>>("orderList")
+                        Log.d("PARAMETER", "customerData: $customerData, orderList: $orderList")
 
-                // Check if parameters are not null
-                if (id != null && kodeCustomer != null && kodeProduk != null &&
-                    jumlahPesanan != null && hargaKg != null && shipment != null &&
-                    payment != null && totalPenerimaan != null) {
-
-                    when (call.method) {
-                        "saveOrder" -> {
-                            // Call the saveOrder function with the parameters
-                            httpRequest.saveOrder(
-                                id,
-                                kodeCustomer,
-                                kodeProduk,
-                                jumlahPesanan,
-                                hargaKg,
-                                shipment,
-                                payment,
-                                totalPenerimaan,
-                            ) { orderData ->
-                                if (orderData.isNotEmpty()) {
-                                    // Return the data as List<Map<String, Any>> to Flutter
-                                    result.success(orderData) // Returning the data directly
+                        if (customerData != null && orderList != null) {
+                            httpRequest.saveOrder(customerData, orderList) { responseData ->
+                                if (responseData.isNotEmpty()) {
+                                    // Success case: Return data back to the Flutter side
+                                    result.success(responseData)
                                 } else {
-                                    // If no data is returned, send an error message
-                                    result.error("ORDER_FAILED", "No data returned from the order save process", null)
+                                    // Failure case: No data found or API returned an error
+                                    result.error("EMPTY_RESPONSE", "No data returned from saveOrder", null)
                                 }
                             }
+                        } else {
+                            result.error("MISSING_FIELDS", "Some fields are missing", null)
                         }
-                        else -> result.notImplemented() // If method not recognized
                     }
-                } else {
-                    result.error("INVALID_PARAMETERS", "One or more parameters are null", null)
+
+                    // Handle other methods here
+                    "anotherMethod" -> {
+                        // Implementation for another method
+                        result.success("Handled anotherMethod")
+                    }
+
+                    else -> {
+                        result.notImplemented() // Return this if the method is not recognized
+                    }
                 }
             }
 

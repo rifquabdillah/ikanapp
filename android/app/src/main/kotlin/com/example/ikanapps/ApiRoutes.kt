@@ -2,6 +2,8 @@ package com.example.ikanapps
 
 import retrofit2.Call
 import retrofit2.http.GET
+import retrofit2.http.Body
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 
@@ -36,6 +38,10 @@ interface ApiRoutes {
     fun getStok(
     ): Call<HttpRequest.StokResponse> // <- HttpRequest.LoginResponse = struktur data nu bakal di hasilkeun ti api na
 
+    @GET("users")
+    fun getUser(
+    ): Call<HttpRequest.UserResponse>
+
     @GET("supplier")
     fun getSupplier(
     ): Call<HttpRequest.SupplierResponse>
@@ -56,8 +62,9 @@ interface ApiRoutes {
     fun getBobot(
     ): Call<HttpRequest.BobotResponse>
 
-    @GET("save")
+    @POST("saveOrder")
     fun saveOrder(
+        @Body requestData: Map<String, Any> // This should match the type you send
     ): Call<HttpRequest.SaveOrderResponse>
 
     @GET("get-order")

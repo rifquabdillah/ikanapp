@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ikanapps/backend/nativeChannel.dart';
+import 'package:intl/intl.dart';
 import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'confirmationScreen.dart';
@@ -17,25 +18,18 @@ class _OrderscreenState extends State<Orderscreen> {
   String? _selectedSupplier;
   String? _selectedFishVariant;
   String? _quantity;
-  String? _count;
-  String? _price;
+  String? jumlahPesanan;
+  String? hargaKg;
   String? _selectedProductCode;
   String? _selectedShipment;
   String? _selectedPayment;
+  bool isOrderAdded = false;
+
 
   List<String> _fishVariants = [];
   final List<Map<String, String>> _orderList = [];
   List<Map<String, dynamic>> suppliersData = [];
   Map<String, dynamic>? _selectedSupplierDetails;
-
-
-  String _calculateTotal() {
-    double count = double.tryParse(_count ?? '0') ?? 0; // Jumlah item
-    double price = double.tryParse(_price ?? '0') ?? 0; // Harga per unit
-    double quantity = double.tryParse(_quantity ?? '0') ?? 0; // Bobot per unit
-    double total = count * price * quantity; // Total harga berdasarkan semua faktor
-    return total.toStringAsFixed(0); // Mengembalikan nilai tanpa desimal
-  }
 
 
   Future<List<Map<String, dynamic>>> fetchCustomer() async {
@@ -112,18 +106,11 @@ class _OrderscreenState extends State<Orderscreen> {
 
 
 
-  // Function to update fish variants based on selected fish
-  void _updateFishVariants(String selectedFish) {
-    setState(() {
-      _fishVariants = ['Varian 1', 'Varian 2', 'Varian 3'];
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6693be),
+        backgroundColor: const Color(0xFF07a0c3),
         title: const Text("Orderan"),
         centerTitle: true,
         elevation: 5,
@@ -142,59 +129,81 @@ class _OrderscreenState extends State<Orderscreen> {
             children: [
               // Customer Dropdown
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: fetchCustomer(), // Ambil data customer
+                future: fetchCustomer(), // Fetch customer data
                 builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
                   List<Map<String, dynamic>> customerData = snapshot.data ?? [];
+                  if (customerData.isEmpty) {
+                    return const Center(child: Text('No customers available'));
+                  }
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Dropdown untuk memilih customer
+                      // Dropdown for selecting customer
                       DropdownField<String>(
                         value: _selectedSupplier,
                         items: customerData.map((item) {
-                          return '${item['id']} - ${item['nama']}'; // Menampilkan ID dan nama customer di dropdown
+                          return '${item['id']} - ${item['nama']}'; // Display customer ID and name
                         }).toList(),
                         label: "Pilih Customer",
                         itemLabel: (item) => item,
-                        onChanged: (value) {
+                        onChanged: isOrderAdded
+                            ? (_) {} // No-op function when order is added
+                            : (value) {
                           setState(() {
                             _selectedSupplier = value;
-                            // Mengambil detail customer berdasarkan ID dan nama yang dipilih
                             _selectedSupplierDetails = customerData.firstWhere(
-                                  (item) =>
-                              '${item['id']} - ${item['nama']}' == value, // Mencocokkan ID dan nama untuk memilih data yang tepat
-                              orElse: () => {}, // Jika tidak ditemukan, return map kosong
+                                  (item) => '${item['id']} - ${item['nama']}' == value,
+                              orElse: () => {},
                             );
                           });
                         },
                       ),
+
                       const SizedBox(height: 10),
 
-                      // Menampilkan detail customer yang dipilih
-                      _buildDetailContainer(
-                        "ID Customer",
-                        _selectedSupplierDetails?['id']?.toString() ?? '-',
+                      // Button to add new customer
+                      // Button to add new customer
+                      ElevatedButton(
+                        onPressed: () async {
+                          final result = await showModalBottomSheet<Map<String, dynamic>>(
+                            context: context,
+                            isScrollControlled: true, // Allow the modal to expand for inputs
+                            builder: (_) => _AddCustomerBottomSheet(),
+                          );
+
+                          // Reload customer data if a new customer is added
+                          if (result != null) {
+                            setState(() {
+                              customerData.add(result); // Add new customer to the list
+                              _selectedSupplier = '${result['id']} - ${result['nama']}';
+                            });
+                          }
+                        },
+                        child: const Text("Tambah Customer"),
                       ),
-                      _buildDetailContainer(
-                        "Nama Customer",
-                        _selectedSupplierDetails?['nama'] ?? '-',
-                      ),
-                      _buildDetailContainer(
-                        "Telepon",
-                        _selectedSupplierDetails?['telepon'] ?? '-',
-                      ),
-                      _buildDetailContainer(
-                        "Telepon",
-                        _selectedSupplierDetails?['telepon2'] ?? '-',
-                      ),
-                      _buildDetailContainer(
-                        "Alamat",
-                        _selectedSupplierDetails?['alamat'] ?? '-',
-                      ),
+
+
+                      // Check if the customer details are available and show the details card
+                      if (_selectedSupplierDetails != null &&
+                          _selectedSupplierDetails!.isNotEmpty)
+                        _buildDetailCard(),
                     ],
                   );
                 },
               ),
+
+
+
+
 
 
 
@@ -209,7 +218,7 @@ class _OrderscreenState extends State<Orderscreen> {
                     } else if (snapshot.hasError) {
                       return Text('Error: ${snapshot.error}');
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Text('Tidak ada data stok tersedia.');
+                      return const Text('Tidak ada data stok tersedia.');
                     } else {
                       List<Map<String, dynamic>> stockData = snapshot.data ??
                           [];
@@ -227,7 +236,7 @@ class _OrderscreenState extends State<Orderscreen> {
                                   (item) => item['nama'] == value,
                             );
                             _selectedProductCode =
-                                selectedProduct?['kodeProduk'] ?? '-';
+                                selectedProduct['kodeProduk'] ?? '-';
                           });
                         },
                       );
@@ -306,12 +315,7 @@ class _OrderscreenState extends State<Orderscreen> {
                   );
                 },
               ),
-
-
-
               const SizedBox(height: 20),
-
-// Payment Dropdown
               FutureBuilder<List<Map<String, dynamic>>>(
                 future: fetchPayment(),
                 builder: (context, snapshot) {
@@ -332,14 +336,9 @@ class _OrderscreenState extends State<Orderscreen> {
                   );
                 },
               ),
-
-
-
-
               const SizedBox(height: 15),
               _buildAddOrderButton(),
               const SizedBox(height: 20),
-
               const Text("Pesanan",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
@@ -353,12 +352,36 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 
+  Widget _buildDetailCard() {
+    return Card(
+      elevation: 5,  // Menambahkan bayangan agar lebih menarik
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),  // Rounded corners untuk tampilan lebih modern
+      ),
+      color: const Color(0xff51bdd5),  // Warna background putih agar lebih bersih
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),  // Padding di dalam Card
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,  // Menyusun elemen dari kiri ke kanan
+          children: [
+            _buildDetailContainer("ID Customer", _selectedSupplierDetails?['id']?.toString() ?? '-'),
+            _buildDetailContainer("Nama Customer", _selectedSupplierDetails?['nama'] ?? '-'),
+            _buildDetailContainer("Telepon", _selectedSupplierDetails?['telepon'] ?? '-'),
+            _buildDetailContainer("Telepon 2", _selectedSupplierDetails?['telepon2'] ?? '-'),
+            _buildDetailContainer("Alamat", _selectedSupplierDetails?['alamat'] ?? '-'),
+          ],
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildCountField() {
     return TextField(
       keyboardType: TextInputType.number,
       onChanged: (value) {
         setState(() {
-          _count = value; // Menyimpan jumlah yang dimasukkan
+          jumlahPesanan = value; // Menyimpan jumlah yang dimasukkan
         });
       },
       decoration: const InputDecoration(
@@ -373,35 +396,12 @@ class _OrderscreenState extends State<Orderscreen> {
       keyboardType: TextInputType.number,
       onChanged: (value) {
         setState(() {
-          _price = value;
+          hargaKg = value;
         });
       },
       decoration: const InputDecoration(
         labelText: "Harga (per kg)",
         border: OutlineInputBorder(),
-      ),
-    );
-  }
-
-  Widget _buildDetailContainer(String label, String? value) {
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.white,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        "$label: ${value ?? 'Tidak tersedia'}",
-        style: const TextStyle(fontSize: 16),
       ),
     );
   }
@@ -415,17 +415,20 @@ class _OrderscreenState extends State<Orderscreen> {
           if (_selectedFish != null &&
               _selectedFishVariant != null &&
               _quantity != null &&
-              _count != null &&
-              _price != null) {
+              jumlahPesanan != null &&
+              hargaKg != null) {
             _addOrder();
 
-            // Reset the form after adding the order
+            // Set the flag to lock the customer dropdown
+            // Reset all fields except the customer dropdown
             setState(() {
               _selectedFish = null;
               _selectedFishVariant = null;
               _quantity = null;
-              _count = null;
-              _price = null;
+              jumlahPesanan = null;
+              hargaKg = null;
+              _selectedShipment = null;
+              _selectedPayment = null;
             });
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -434,7 +437,7 @@ class _OrderscreenState extends State<Orderscreen> {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6693be),
+          backgroundColor: const Color(0xFF0690b0),
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
@@ -451,14 +454,16 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 
+
+
   void _addOrder() {
     setState(() {
       _orderList.add({
         'fish': _selectedFish!,
         'variant': _selectedFishVariant!,
         'quantity': _quantity!,
-        'count': _count!,
-        'price': _price!,
+        'jumlahPesanan': jumlahPesanan!,
+        'hargaKg': hargaKg!,
         'shipment':_selectedShipment!,
         'payment':_selectedPayment!,
 
@@ -468,39 +473,39 @@ class _OrderscreenState extends State<Orderscreen> {
 
   Widget _buildOrderTable() {
     if (_orderList.isEmpty) {
-      return const Text("Belum ada pesanan.");
+      return const Center(child: Text("Belum ada pesanan.", style: TextStyle(fontSize: 18, color: Colors.grey)));
     }
+
     return ListView.builder(
       shrinkWrap: true,
       itemCount: _orderList.length,
       itemBuilder: (context, index) {
         final order = _orderList[index];
         return Container(
-          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
           child: Card(
-            elevation: 2,
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15), // Rounded corners for modern look
+            ),
             color: const Color(0xffFAF9F6),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "ID Customer: ${_selectedSupplierDetails?['id'] ?? '-'}",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  Text(
-                    "Kode Customer: ${_selectedSupplierDetails?['kodeCustomer'] ?? '-'}",
-                  ),
-                  Text("Nama Customer: ${_selectedSupplier ?? 'Belum dipilih'}"),
+                  // Title/Heading
                   const SizedBox(height: 8),
-                  Text("Jenis Ikan: ${order['fish']}"),
-                  Text("Varian Ikan: ${order['variant']}"),
-                  Text("Jumlah: ${order['quantity']}"),
-                  Text("Harga Total: ${_calculateTotal()}"),
-                  Text("Shipment: ${order['shipment']}"),
-                  Text("Payment: ${order['payment']}"),
+                  const Divider(),
+                  // Product Information Section
+                  _buildDetailRow("Nama Produk", order['fish'] ?? '-'),
+                  _buildDetailRow("Varian Produk", order['variant'] ?? '-'),
+                  // Order Information Section
+                  _buildDetailRow("Jumlah Pesanan", order['jumlahPesanan']?.toString() ?? '-'),
+                  _buildDetailRow("Harga per Kg", order['hargaKg']?.toString() ?? '-'),
+                  _buildStatusRow("Shipment", order['shipment'] ?? '-'),
+                  _buildStatusRow("Payment", order['payment'] ?? '-'),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -509,6 +514,102 @@ class _OrderscreenState extends State<Orderscreen> {
       },
     );
   }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Text(
+            "$label: ",
+            style: const TextStyle(
+              fontWeight: FontWeight.w400,
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 16,fontWeight: FontWeight.w600, color: Colors.black54),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusRow(String label, String value) {
+    Color statusColor = Colors.black87;
+
+    // Apply color based on status (e.g., Payment, Shipment)
+    if (label == "Payment") {
+      statusColor = value == "Lunas" ? Colors.green : Colors.red;
+    } else if (label == "Shipment") {
+      statusColor = value == "Open" ? Colors.blue : (value == "Proses" ? Colors.orange : Colors.green);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Text(
+            "$label: ",
+            style: const TextStyle(
+              fontWeight: FontWeight.w400,
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(fontSize: 16,fontWeight: FontWeight.w600, color: statusColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  _buildDetailContainer(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),  // Padding vertical untuk jarak antar item
+      child: Card(
+        elevation: 5,  // Menambahkan bayangan agar lebih menarik
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),  // Rounded corners untuk tampilan lebih modern
+        ),
+        color: Colors.white,  // Warna background putih agar lebih bersih
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),  // Padding di dalam Card
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Menempatkan label dan value di sisi yang berbeda
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xff06809c),  // Menggunakan warna yang sesuai dengan tema
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: "Montserrat",
+                  color: Colors.black87,  // Warna teks nilai
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildConfirmationButton(BuildContext context) {
     return SizedBox(
@@ -528,31 +629,51 @@ class _OrderscreenState extends State<Orderscreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ConfirmationScreen(
-                  customerData: {
-                    'Nama Customer': _selectedSupplier ?? 'Unknown', // Directly passing the customer name
-                    'item': _orderList.isNotEmpty ? _orderList.first['fish'] ?? 'Unknown Fish' : 'Unknown Fish', // Directly passing the item (fish)
-                    'variant': _orderList.isNotEmpty ? _orderList.first['variant'] ?? 'Unknown Variant' : 'Unknown Variant', // Variant
-                    'quantity': _orderList.isNotEmpty ? _orderList.first['quantity'] ?? '0' : '0', // Quantity
-                    'price': _orderList.isNotEmpty ? _orderList.first['price'] ?? '0' : '0', // Price
-                    'shipment': _orderList.isNotEmpty ? _orderList.first['shipment'] ?? 'Unknown Shipment' : 'Unknown Shipment', // Shipment
-                    'payment': _orderList.isNotEmpty ? _orderList.first['payment'] ?? 'Unknown Payment' : 'Unknown Payment', // Payment
-                  },
-                  totalHarga: _orderList.isNotEmpty ? _calculateTotal() : '0', // Total price calculation
-                  tanggalTransaksi: DateTime.now().toString(), // Current date as the transaction date
-                ),
+                builder: (context) {
+                  // Menghitung total harga
+                  double totalHarga = 0.0;
+                  for (var order in _orderList) {
+                    double jumlahPesanan = double.tryParse(order['jumlahPesanan'].toString()) ?? 0.0;
+                    double hargaKg = double.tryParse(order['hargaKg'].toString()) ?? 0.0;
+                    totalHarga += jumlahPesanan * hargaKg;
+                  }
+                  // Format totalHarga as Rupiah
+                  String formattedTotalHarga = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ').format(totalHarga);
+                  print('Total Harga: $formattedTotalHarga');
+                  // Mengirimkan data dengan format yang benar
+                  return ConfirmationScreen(
+                    customerData: {
+                      'Nama Customer': _selectedSupplier ?? 'Unknown',
+                      'items': _orderList, // Pastikan ini adalah list, bukan string
+                    },
+                    totalHarga: totalHarga.toString(),
+                    tanggalTransaksi: DateTime.now().toString(),
+                  );
+                },
               ),
             );
-
-
-
           }
         },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF0690b0),
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          foregroundColor: const Color(0xffe9f0f6),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Montserrat',
+          ),
+        ),
         child: const Text("Konfirmasi Transaksi"),
       ),
     );
   }
 }
+
+
 
   class DropdownField<T> extends StatelessWidget {
   final String? value;
@@ -576,15 +697,131 @@ class _OrderscreenState extends State<Orderscreen> {
       value: value,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(),
+        labelStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: Color(0xff046075), // Warna teks label
+        ),
+        filled: true, // Latar belakang field diwarnai
+        fillColor: const Color(0xFFffffff), // Warna latar belakang
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), // Sudut border melengkung
+          borderSide: const BorderSide(
+            color: Color(0xff046075), // Warna border
+            width: 2, // Ketebalan border
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Color(0xff046075), // Warna border saat fokus
+            width: 2,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Color(0xff046075), // Warna border saat tidak fokus
+            width: 1.5,
+          ),
+        ),
+      ),
+      style: const TextStyle(
+        fontSize: 14, // Ukuran teks dropdown
+        color: Colors.black87, // Warna teks dropdown
+      ),
+      dropdownColor: const Color(0xFFF0F4FF), // Warna latar belakang dropdown
+      icon: const Icon(
+        Icons.arrow_drop_down,
+        color: Color(0xff02303a), // Warna ikon dropdown
       ),
       onChanged: onChanged,
       items: items.map((String item) {
         return DropdownMenuItem<String>(
           value: item,
-          child: Text(itemLabel(item)),
+          child: Text(
+            itemLabel(item),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Montserrat',
+              color: Color(0xff011013), // Warna teks setiap item
+            ),
+          ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _AddCustomerBottomSheet extends StatelessWidget {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _teleponController = TextEditingController();
+  final TextEditingController _telepon2Controller = TextEditingController();
+  final TextEditingController _alamatController = TextEditingController();
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard visibility
+        top: 16,
+        left: 16,
+        right: 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'Customer Name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          TextField(
+            controller: _teleponController,
+            decoration: const InputDecoration(
+              labelText: 'Telepon',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          TextField(
+            controller: _telepon2Controller,
+            decoration: const InputDecoration(
+              labelText: 'Telepon',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          TextField(
+            controller: _alamatController,
+            decoration: const InputDecoration(
+              labelText: 'Alamat',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              String customerName = _nameController.text;
+              if (customerName.isNotEmpty) {
+                // Handle saving the new customer
+                // For now, just show a confirmation message and close the bottom sheet
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Added customer: $customerName')),
+                );
+                Navigator.pop(context); // Close the bottom sheet
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a customer name')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 }

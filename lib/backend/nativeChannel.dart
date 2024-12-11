@@ -26,7 +26,6 @@ class NativeChannel {
     print('NativeChannel initialized');
   }
 
-  // Fungsi untuk mengambil data produk atau user dari Native code
   Future<String> getAkun(String username, String password) async {
     try {
       final result = await AKUN_CHANNEL.invokeMethod('fetchProducts', {
@@ -205,7 +204,7 @@ class NativeChannel {
       }
     } catch (e) {
       // Handle exceptions and errors
-      print("Error fetching stock data: $e");
+      print("Error fetching user data: $e");
       return [];
     }
   }
@@ -216,82 +215,60 @@ class NativeChannel {
     required String totalHarga,
     required String tanggalTransaksi,
   }) async {
-    // Check for null or empty parameters and handle them accordingly
-    if (customerData.isEmpty) {
-      throw 'Customer data cannot be empty';
-    }
-
-    if (orderList.isEmpty) {
-      throw 'Order list cannot be empty';
-    }
-
-    if (totalHarga.isEmpty) {
-      throw 'Total harga cannot be empty';
-    }
-
-    if (tanggalTransaksi.isEmpty) {
-      throw 'Tanggal transaksi cannot be empty';
-    }
-
     try {
-      // Call the native method only if all parameters are valid
+      // Convert data to JSON strings
+      final encodedCustomerData = jsonEncode(customerData);
+      final encodedOrderList = jsonEncode(orderList);
+
+      // Send data via MethodChannel
       final result = await SAVE_ORDER_CHANNEL.invokeMethod('saveOrder', {
-        'customerData': customerData,
-        'orderList': orderList,
+        'customerData': encodedCustomerData,
+        'orderList': encodedOrderList,
+        'totalHarga': totalHarga,
+        'tanggalTransaksi': tanggalTransaksi,
       });
 
-      // Check if the result is a String
+      // Check the result
       if (result is String) {
-        return result; // Return the success or error message from native
+        return result;
       } else {
-        throw 'Expected a String but received: ${result.runtimeType}';
+        throw Exception("Unexpected result type: ${result.runtimeType}");
       }
     } on PlatformException catch (e) {
       print('Failed to save order: ${e.message}');
-      throw 'Failed to save order: ${e.message}';
+      throw Exception('Failed to save order: ${e.message}');
     } catch (e) {
       print('Error saving order: $e');
-      throw 'Error saving order: $e';
+      throw Exception('Error saving order: $e');
     }
   }
 
 
 
 
-  Future<List<Map<String, dynamic>>> getOrder() async {
+  Future<List<Map<String, dynamic>>> fetchOrder() async {
     try {
-      // Invoke the platform channel to fetch order data
-      final result = await GET_ORDER_CHANNEL.invokeMethod('getOrder');
+      // Invoke the platform channel to fetch stock data
+      final result = await ORDER_CHANNEL.invokeMethod('fetchOrder');
 
-      // Log the raw result for debugging
-      print("Raw result from native code: $result");
-
-      // Check if the result is a list
+      // Parse the result into a list of maps
       if (result is List) {
-        List<Map<String, dynamic>> userList = [];
-        for (var item in result) {
+        return List<Map<String, dynamic>>.from(result.map((item) {
           if (item is Map) {
-            // Add each map to the userList after ensuring it's a valid map
-            userList.add(Map<String, dynamic>.from(item));
+            return Map<String, dynamic>.from(item);
           } else {
-            // Log unexpected item types
-            print("Unexpected item format in result: $item");
             throw FormatException("Invalid item format in result");
           }
-        }
-        return userList;
+        }));
       } else {
-        // Log the type of result returned if it's not a List
-        print("Expected a List, but got: ${result.runtimeType}");
-        throw FormatException("Expected a List, but got: ${result.runtimeType}");
+        throw FormatException("Expected a list, but got: ${result.runtimeType}");
       }
     } catch (e) {
-      // Log the error for debugging
-      print("Error fetching order data: $e");
+      // Handle exceptions and errors
+      print("Error fetching stock data: $e");
       return [];
     }
   }
-
 
   Future<List<Map<String, dynamic>>> saveStock(stock) async {
     try {
@@ -342,7 +319,6 @@ class NativeChannel {
       return [];
     }
   }
-
 
   Future<List<Map<String, dynamic>>> fetchPayment() async {
     try {

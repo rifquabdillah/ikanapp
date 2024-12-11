@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ikanapps/screen/UserManagementScreen.dart';
-import 'package:ikanapps/screen/orderHistory.dart';
+import 'package:ikanapps/screen/detailOrder.dart';
+import 'package:ikanapps/screen/detailPembelian.dart';
+import 'package:ikanapps/screen/ProsesOrder.dart';
 import 'package:ikanapps/screen/pembelian.dart';
 import 'orderScreen.dart';
 import 'stockManagementScreen.dart';
@@ -243,20 +245,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text('Order History'),
+                leading: const Icon(Icons.shopping_cart_rounded),
+                title: const Text("Status", style: TextStyle(fontFamily: 'CooperMdBT')),
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderHistoryScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) =>  PaymentShipmentPage()));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Order Invoice'),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderDetailScreen(customerData: {}, orderList: [],)));
                 },
               ),
             ],
           ),
-          ListTile(
+          ExpansionTile(
             leading: const Icon(Icons.receipt_long),
             title: const Text("Pembelian", style: TextStyle(fontFamily: 'CooperMdBT')),
+            children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.receipt_long_rounded),
+              title: const Text("Pembelian", style: TextStyle(fontFamily: 'CooperMdBT')),
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const PembelianScreen()));
             },
+          ),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Pembelian Invoice'),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PembelianDetailScreen(customerData: {}, orderList: [],)));
+                },
+              ),
+            ],
           ),
           ListTile(
             leading: const Icon(Icons.report),
@@ -265,6 +287,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
             },
           ),
+
           // Show admin options if the user is an admin
           if (userRole == 'admin') ...[
             ListTile(

@@ -1,29 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:ikanapps/backend/nativeChannel.dart';
 import 'package:intl/intl.dart'; // Import intl
 
-class OrderDetailScreen extends StatelessWidget {
+class PembelianDetailScreen extends StatelessWidget {
   final Map<String, String> customerData;
   final List<Map<String, String>> orderList;
 
-  const OrderDetailScreen({
+  const PembelianDetailScreen({
     Key? key,
     required this.customerData,
     required this.orderList,
   }) : super(key: key);
-
-
-  Future<List<Map<String, dynamic>>> fetchOrder() async {
-    try {
-      print("Fetching fish variant data...");
-      var produkData = await NativeChannel.instance.fetchOrder();
-      print("Data fetched: $produkData");
-      return produkData;
-    } catch (e) {
-      print("Error fetching data: $e");
-      return [];
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -157,27 +143,6 @@ class OrderDetailScreen extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     // Status pengiriman dan pembayaran hanya ditampilkan sekali
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Shipment Status:",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Montserrat',
-                          ),
-                        ),
-                        Text(
-                          shipmentStatus,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontFamily: 'Montserrat',
-                            color: Colors.blueGrey,
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

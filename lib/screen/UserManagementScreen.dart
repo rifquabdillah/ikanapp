@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:ikanapps/backend/nativeChannel.dart';
 
@@ -10,154 +9,145 @@ class UserManagementScreen extends StatefulWidget {
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
-  String username = '';  // Username pengguna
-  String email = '';     // Email pengguna
-  String alamat = '';    // Alamat pengguna
-  String role = 'user';  // Role default pengguna
-  String nama = '';      // Nama pengguna
-
-  bool isLoading = true; // Status loading
-
-  // Daftar role yang bisa dipilih
-  final List<String> roles = ['user', 'admin', 'owner'];
-
-  // Fungsi untuk mengambil data pengguna dari backend
-  Future<void> getUser(String nama) async {
-    try {
-      // Panggil API dengan username dan password untuk mendapatkan data pengguna
-      final response = await NativeChannel.instance.fetchUser();
-      print('User Data Success: $response');
-
-      // Misalnya response adalah String JSON yang perlu diparsing
-      if (response.isNotEmpty) {
-        final Map<String, dynamic> userData = _parseUserData(response as String);
-        setState(() {
-          this.username = username;
-          this.nama = userData['nama'] ?? 'Unknown';
-          this.alamat = userData['alamat'] ?? 'Unknown';
-          this.email = userData['email'] ?? 'Unknown';
-          this.role = userData['role'] ?? 'user';
-          isLoading = false; // Hentikan loading setelah data selesai
-        });
-      }
-    } catch (e) {
-      print('Error fetching user data: $e');
-      setState(() {
-        isLoading = false; // Hentikan loading jika terjadi error
-      });
-    }
-  }
-
-  Map<String, dynamic> _parseUserData(String response) {
-    try {
-      // Jika response adalah JSON string, kita coba decode
-      return Map<String, dynamic>.from(jsonDecode(response));
-    } catch (e) {
-      print('Error parsing user data: $e');
-      return {};
-    }
-  }
+  late Future<List<Map<String, dynamic>>> _futureUser;
+  final List<Map<String, dynamic>> _userList = [];
+  String? _selectedUser;
+  Map<String, dynamic>? _selectedUserDetails;
 
   @override
   void initState() {
     super.initState();
-    // Ambil username dan password dari sumber lain, misalnya hardcode atau parameter.
-    String nama = ''; // Ganti dengan username yang sesuai
-    // Panggil fungsi untuk mendapatkan data pengguna berdasarkan username dan password
-    getUser(nama);
+    _futureUser = fetchUser();
   }
 
-  // Fungsi untuk menyimpan perubahan role
-  void _saveUserRole() {
-    print('Role updated to: $role');
-    // Kirim request ke server untuk memperbarui data pengguna
-    NativeChannel.instance.updateUserRole(username, role);
+  Future<List<Map<String, dynamic>>> fetchUser() async {
+    try {
+      print("Fetching customer data...");
+      var produkData = await NativeChannel.instance.fetchUser();
+      print("Data fetched: $produkData");
+      if (produkData is List) {
+        return produkData.map((user) => Map<String, dynamic>.from(user)).toList();
+      } else {
+        throw Exception("Invalid data format");
+      }
+    } catch (e) {
+      print("Error fetching customer data: $e");
+      return [];
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Management'),
+        title: const Text("Manajemen User"),
+        centerTitle: true,
+        backgroundColor: Colors.teal,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Menampilkan progress indicator ketika data masih dalam proses pengambilan
-              if (isLoading)
-                const Center(child: CircularProgressIndicator())
-              else if (username.isNotEmpty)
-              // Membungkus semua informasi dalam satu Card
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  margin: const EdgeInsets.only(bottom: 16.0),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Data pengguna
-                        Text(
-                          'Name: $nama',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Username: $username',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Email: $email',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Address: $alamat',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 16),
-                        // Dropdown untuk memilih role
-                        Text(
-                          'Role: $role',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          value: role,
-                          decoration: const InputDecoration(labelText: 'Select Role'),
-                          items: roles.map((String role) {
-                            return DropdownMenuItem<String>(
-                              value: role,
-                              child: Text(role),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              role = newValue!;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        // Tombol simpan untuk menyimpan perubahan role
-                        ElevatedButton(
-                          onPressed: _saveUserRole,
-                          child: const Text('Save Changes'),
-                        ),
-                      ],
-                    ),
-                  ),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _futureUser,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text("Terjadi kesalahan: ${snapshot.error}"),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text("Belum ada data user."));
+            }
+
+            if (_userList.isEmpty) {
+              _userList.addAll(snapshot.data!);
+              print("User list: $_userList");
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Daftar User",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-            ],
-          ),
+                const SizedBox(height: 10),
+
+                // Dropdown untuk memilih user
+                DropdownButtonFormField<String>(
+                  value: _selectedUser,
+                  hint: const Text("Pilih User"),
+                  items: _userList.map((user) {
+                    return DropdownMenuItem<String>(
+                      value: '${user['id']} - ${user['nama']}',
+                      child: Text('${user['id']} - ${user['nama']}'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedUser = value;
+                      _selectedUserDetails = _userList.firstWhere(
+                            (user) => '${user['id']} - ${user['nama']}' == value,
+                      );
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Menampilkan detail user yang dipilih
+                if (_selectedUserDetails != null) ...[
+                  _buildDetailContainer(
+                    "ID User",
+                    _selectedUserDetails?['id']?.toString() ?? '-',
+                  ),
+                  _buildDetailContainer(
+                    "Nama",
+                    _selectedUserDetails?['nama'] ?? '-',
+                  ),
+                  _buildDetailContainer(
+                    "Telepon",
+                    _selectedUserDetails?['telepon'] ?? '-',
+                  ),
+                  _buildDetailContainer(
+                    "Username",
+                    _selectedUserDetails?['username'] ?? '-',
+                  ),
+                  _buildDetailContainer(
+                    "Email",
+                    _selectedUserDetails?['email'] ?? '-',
+                  ),
+                  _buildDetailContainer(
+                    "Role",
+                    _selectedUserDetails?['role'] ?? '-',
+                  ),
+                  _buildDetailContainer(
+                    "Alamat",
+                    _selectedUserDetails?['alamat'] ?? '-',
+                  ),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
+}
+
+Widget _buildDetailContainer(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "$label: ",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: Text(value),
+        ),
+      ],
+    ),
+  );
 }
