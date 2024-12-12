@@ -64,7 +64,7 @@ interface ApiRoutes {
 
     @POST("saveOrder")
     fun saveOrder(
-        @Body requestData: Map<String, Any> // This should match the type you send
+        @Body requestData: HttpRequest.SaveOrderRequest // This should match the type you send
     ): Call<HttpRequest.SaveOrderResponse>
 
     @GET("get-order")

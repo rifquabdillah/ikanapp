@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ikanapps/backend/nativeChannel.dart';
 
 class PaymentShipmentPage extends StatefulWidget {
   @override
@@ -6,24 +7,41 @@ class PaymentShipmentPage extends StatefulWidget {
 }
 
 class _PaymentShipmentPageState extends State<PaymentShipmentPage> {
-  // Sample data for payment and shipment options
-  final List<String> paymentOptions = ['Credit Card', 'Cash', 'PayPal'];
-  final List<String> shipmentOptions = ['Standard Shipping', 'Express Shipping', 'Next Day Delivery'];
+  List<Map<String, dynamic>> orders = [];  // Stores fetched orders
 
-  // Selected values for each dropdown
+  // Dropdown options for payment and shipment
+  List<String> paymentOptions = ['0', '1', '2'];  // Modify as needed
+  List<String> shipmentOptions = ['0', '1'];  // Modify as needed
+
+  // Variables to store selected values
   String? selectedPayment;
   String? selectedShipment;
 
-  // Sample order data
-  final String orderId = "123456";
-  final String orderName = "Fresh Fish Order";
-  final String orderAddress = "123 Ocean Drive, Beach City";
+  // Function to fetch order data
+  Future<void> fetchGetOrder() async {
+    try {
+      print("Fetching order data...");
+      var produkData = await NativeChannel.instance.fetchGetOrder();  // Fetch orders from the native channel
+      print("Data fetched: $produkData");
+
+      setState(() {
+        orders = List<Map<String, dynamic>>.from(produkData); // Save data to orders
+      });
+    } catch (e) {
+      print("Error fetching order data: $e");
+      setState(() {
+        orders = [];  // Set empty if there's an error
+      });
+    }
+  }
 
   // Base color for styling
   final Color baseColor = Color(0xFF07a0c3);
 
-  // Function to build a card with dropdowns
+  // Function to build a card with order data
   Widget _buildCard(int index) {
+    final order = orders[index];
+
     return Card(
       margin: const EdgeInsets.all(8.0),
       elevation: 5,
@@ -36,10 +54,11 @@ class _PaymentShipmentPageState extends State<PaymentShipmentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Display Order ID, Name, and Address
-            Text('Order ID: $orderId', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            Text('Order Name: $orderName', style: TextStyle(color: Colors.white)),
-            Text('Order Address: $orderAddress', style: TextStyle(color: Colors.white)),
+            // Display Order ID, Name, and other details
+            Text('Order ID: ${order['id']}', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text('Jumlah Pesanan: ${order['jumlahPesanan']}', style: TextStyle(color: Colors.white)),
+            Text('Harga/Kg: ${order['hargaKg']}', style: TextStyle(color: Colors.white)),
+            Text('Total Penerimaan: ${order['totalPenerimaan']}', style: TextStyle(color: Colors.white)),
             SizedBox(height: 16), // Spacer between order details and dropdowns
 
             // Row for Payment and Shipment Dropdowns
@@ -53,7 +72,7 @@ class _PaymentShipmentPageState extends State<PaymentShipmentPage> {
                     children: [
                       Text('Payment:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                       DropdownButton<String>(
-                        value: selectedPayment,
+                        value: selectedPayment ?? order['payment'],  // Default value from the fetched data
                         hint: Text('Select Payment', style: TextStyle(color: Colors.white)),
                         onChanged: (String? newValue) {
                           setState(() {
@@ -78,7 +97,7 @@ class _PaymentShipmentPageState extends State<PaymentShipmentPage> {
                     children: [
                       Text('Shipment:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                       DropdownButton<String>(
-                        value: selectedShipment,
+                        value: selectedShipment ?? order['shipment'],  // Default value from the fetched data
                         hint: Text('Select Shipment', style: TextStyle(color: Colors.white)),
                         onChanged: (String? newValue) {
                           setState(() {
@@ -104,6 +123,12 @@ class _PaymentShipmentPageState extends State<PaymentShipmentPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    fetchGetOrder(); // Fetch orders when the page is initialized
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -112,14 +137,15 @@ class _PaymentShipmentPageState extends State<PaymentShipmentPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(0.0),
-        child: ListView.builder(
-          itemCount: 5, // Number of cards to display
+        child: orders.isEmpty
+            ? Center(child: CircularProgressIndicator()) // Show loading while data is being fetched
+            : ListView.builder(
+          itemCount: orders.length, // Display based on the number of orders
           itemBuilder: (context, index) {
-            return _buildCard(index);
+            return _buildCard(index); // Build card for each order
           },
         ),
       ),
     );
   }
 }
-

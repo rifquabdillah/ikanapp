@@ -1,61 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:ikanapps/backend/nativeChannel.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';  // Untuk menggunakan random number
 
 class ConfirmationScreen extends StatelessWidget {
-  final Map<String, dynamic> customerData;
+  final Map<String, dynamic>? selectedCustomerDetails;
+  final List<Map<String, String>> orderList;
   final String totalHarga;
-  final String tanggalTransaksi;
+  late String generatedKodeCustomer; // Tambahkan properti ini
 
   ConfirmationScreen({
-    required this.customerData,
-    required this.totalHarga,
-    required this.tanggalTransaksi,
-  });
+    required this.selectedCustomerDetails,
+    required this.orderList,
+    required this.totalHarga
+  }) {
+    // Generate kode customer hanya sekali saat objek ini dibuat
+    generatedKodeCustomer = generateKodeCustomer();
+    print("Selected Supplier Details: $selectedCustomerDetails");
+    print("Selected Order List: $orderList");
+  }
+
+  String generateKodeCustomer() {
+    // Generate kode customer yang unik
+    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    String randomDigits = Random().nextInt(1000).toString().padLeft(3, '0');
+    return 'MJL$timestamp$randomDigits';  // Misal hasilnya MJL123456789012300
+  }
 
   Future<List> saveOrder() async {
     try {
-      // Simulating the fetched data
-      List<Map<String, dynamic>> orderData = [
-        {'id': 1, 'nama': 'Mas', 'quantity': 100, 'shipment': 'Open', 'payment': 'Belum Lunas', 'bobot': '1 kg 1 ekor', 'hargaKg': 20000.0},
-        {'id': 2, 'nama': 'Lele', 'quantity': 100, 'shipment': 'Proses', 'payment': 'Lunas', 'bobot': '1 kg 2 ekor', 'hargaKg': 25000.0},
-        {'id': 3205, 'nama': 'Nila', 'quantity': 100, 'shipment': 'Kirim', 'payment': 'Selesai', 'bobot': '1 kg 1 ekor', 'hargaKg': 30000.0},
-      ];
-
-      // Calculate total price
-      double totalHarga = 0.0;
-      for (var order in orderData) {
-        // Use null-aware operators and default values
-        double jumlahPesanan = (order['quantity'] ?? 0).toDouble();
-        double hargaKg = (order['hargaKg'] ?? 0.0).toDouble();
-        totalHarga += jumlahPesanan * hargaKg;
-      }
-
-      // Format totalHarga as Rupiah
-      String formattedTotalHarga = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ').format(totalHarga);
-
-      // Print formatted total price
-      print('Total Harga: $formattedTotalHarga');
-
-      // Now, pass this data to saveOrder via NativeChannel
+      // Print debug info
       print("Saving order...");
+
+      var date = DateTime.now();
+
+      String dateString = "${date.day}-${date.month}-${date.year}";
+
       var produkData = await NativeChannel.instance.saveOrder(
-        customerData: customerData,  // Assuming customerData is already correctly initialized
-        orderList: orderData,         // Pass the structured order data
-        totalHarga: totalHarga.toString(),      // Pass the total price
-        tanggalTransaksi: tanggalTransaksi, // Pass the transaction date
+          body: {
+            'id': selectedCustomerDetails?['id'],
+            'kodeCustomer': generateKodeCustomer(),  // Menggunakan fungsi generateKodeCustomer
+            'nama': selectedCustomerDetails?['nama'],
+            'kodeProduk': 'lauk',
+            'jumlahPesanan': orderList.first['jumlahPesanan'],
+            'hargaKg': orderList.first['hargaKg'],
+            'shipment': orderList.first['shipment'],
+            'payment': orderList.first['payment'],
+            'totalPenerimaan': orderList.first['totalPenerimaan'],
+            'piutang': orderList.first['piutang'],
+            'aging': orderList.first['aging'],
+            'tglTransaksi': dateString
+          }
       );
 
       print("Order saved successfully: $produkData");
       return produkData as List;
     } catch (e) {
       print("Error saving order: $e");
-      return [];  // Return empty list on error
+      return []; // Return empty list on error
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    print("Building ConfirmationScreen with selectedCustomerDetails: $selectedCustomerDetails");
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.teal,
@@ -66,9 +75,9 @@ class ConfirmationScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Card(
-            elevation: 10.0, // Increased shadow for a modern look
+            elevation: 10.0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), // Rounded corners
+              borderRadius: BorderRadius.circular(20),
             ),
             color: Colors.white,
             child: Padding(
@@ -76,22 +85,35 @@ class ConfirmationScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Customer Information Section
+                  // Supplier Information
                   Text(
-                    'Customer Details:',
+                    'Supplier Details:',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.teal, // Trendy teal color
+                      color: Colors.teal,
                     ),
                   ),
                   const Divider(),
-                  _buildCustomerInfo(),  // Build customer info with dynamic handling
+                  _buildSupplierInfo(),
 
                   const SizedBox(height: 20),
 
-                  // Transaction Details Section (individually displayed parameters)
+                  // Order List Section
                   Text(
-                    'Transaction Details:',
+                    'Order Details:',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  const Divider(),
+                  _buildOrderInfo(),
+
+                  const SizedBox(height: 20),
+
+                  // Transaction Details
+                  Text(
+                    'Transaction Summary:',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.teal,
@@ -100,8 +122,8 @@ class ConfirmationScreen extends StatelessWidget {
                   const Divider(),
                   _buildTransactionInfo(),
 
-                  // Send Data Button
                   const SizedBox(height: 30),
+                  // Save Button
                   ElevatedButton(
                     onPressed: () async {
                       var result = await saveOrder();
@@ -117,9 +139,11 @@ class ConfirmationScreen extends StatelessWidget {
                     },
                     child: const Text('Send Data'),
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50), backgroundColor: Colors.teal, foregroundColor: Colors.white,// Matching the button with the theme
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12), // Rounded button
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
@@ -132,135 +156,54 @@ class ConfirmationScreen extends StatelessWidget {
     );
   }
 
-  // Customer info widget to avoid code repetition
-  Widget _buildCustomerInfo() {
+  Widget _buildSupplierInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCustomerRow('Nama Customer:', customerData['Nama Customer']),
-        _buildItemsInfo(),  // Display items dynamically
+        _buildInfoRow('ID:', selectedCustomerDetails?['id']),
+        _buildInfoRow('Kode Custumer:', generateKodeCustomer()),
+        _buildInfoRow('Nama Order:', selectedCustomerDetails?['nama']),
       ],
     );
   }
 
-  // Helper widget for customer row
-  Widget _buildCustomerRow(String label, dynamic value) {
-    Color paymentStatusColor = Colors.black87; // Default color
-    Color shipmentStatusColor = Colors.black87; // Default color
-
-    // Check if it's payment or shipment label and update the respective colors
-    if (label == 'Payment:') {
-      paymentStatusColor = _getPaymentColor(value);
-    } else if (label == 'Shipment:') {
-      shipmentStatusColor = _getShipmentColor(value);
+  Widget _buildOrderInfo() {
+    if (orderList.isEmpty) {
+      return const Text('No orders available.');
     }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: Row(
-        children: [
-          Text(
-            '$label ',
-            style: const TextStyle(
-              fontWeight: FontWeight.w400,
-              fontSize: 16,
-              color: Colors.black87,
-            ),
-          ),
-          Text(
-            value?.toString() ?? 'Unknown',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              fontFamily: "Montserrat",
-              color: label == 'Payment:' ? paymentStatusColor : shipmentStatusColor,
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: orderList.map((order) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoRow('Ikan:', order['fish']),
+            _buildInfoRow('Variant:', order['variant']),
+            _buildInfoRow('Bobot:', order['quantity']),
+            _buildInfoRow('Jumlah:', order['jumlahPesanan']),
+            _buildInfoRow('Harga:', order['hargaKg']),
+            _buildInfoRow('Total Penerimaan:', order['totalPenerimaan']),
+            _buildInfoRow('Piutang:', order['piutang']),
+            _buildInfoRow('Aging:', order['aging']),
+          ],
+        );
+      }).toList(),
     );
   }
 
-
-  // Display items information dynamically
-  Widget _buildItemsInfo() {
-    var items = customerData['items'];
-
-    // Debugging: Print the content of 'items'
-    print('Items: $items');
-
-    if (items is List) {
-      // Only process if it's a list
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: items.map<Widget>((item) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildCustomerRow('Item:', item['fish']),
-              _buildCustomerRow('Variant:', item['variant']),
-              _buildCustomerRow('Quantity:', item['quantity']),
-              _buildCustomerRow('Jumlah:', item['jumlahPesanan']),
-              _buildCustomerRow('Harga per Kg:', item['hargaKg']),
-
-              // Payment: Check status and color accordingly
-              _buildCustomerRow(
-                'Payment:',
-                item['payment'],
-              ),
-              // Shipment: Check status and color accordingly
-              _buildCustomerRow(
-                'Shipment:',
-                item['shipment'],
-              ),
-              const Divider(),
-            ],
-          );
-        }).toList(),
-      );
-    } else {
-      // If it's not a list, show a fallback message
-      return const Text('No items available');
-    }
-  }
-
-  // Function to determine the payment status color
-  Color _getPaymentColor(String paymentStatus) {
-    if (paymentStatus == 'Belum Lunas') {
-      return Colors.red;  // Red for "Belum Lunas"
-    } else if (paymentStatus == 'Lunas' || paymentStatus == 'Selesai') {
-      return Colors.green; // Green for "Lunas" and "Selesai"
-    } else {
-      return Colors.black87;  // Default color
-    }
-  }
-
-  // Function to determine the shipment status color
-  Color _getShipmentColor(String shipmentStatus) {
-    if (shipmentStatus == 'Open') {
-      return Colors.blue;  // Blue for "Open"
-    } else if (shipmentStatus == 'Proses') {
-      return Colors.orange;  // Orange for "Proses"
-    } else if (shipmentStatus == 'Diterima') {
-      return Colors.green;  // Green for "Diterima"
-    } else {
-      return Colors.black87;  // Default color
-    }
-  }
-
-  // Transaction info widget to avoid code repetition
   Widget _buildTransactionInfo() {
+    var date = DateTime.now();
+    String dateString = "${date.day}-${date.month}-${date.year}";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTransactionRow('Total Harga:', totalHarga),  // Display totalHarga here
-        _buildTransactionRow('Tanggal:', tanggalTransaksi),
+
+        _buildInfoRow('Total Harga:', totalHarga),
+        _buildInfoRow('Tanggal Transaksi:', dateString),
       ],
     );
   }
 
-  // Helper widget for transaction row
-  Widget _buildTransactionRow(String label, String value) {
+  Widget _buildInfoRow(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Row(
@@ -273,9 +216,12 @@ class ConfirmationScreen extends StatelessWidget {
               color: Colors.black87,
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16),
+          Expanded(
+            child: Text(
+              value?.toString() ?? 'Unknown',
+              style: const TextStyle(fontSize: 16),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

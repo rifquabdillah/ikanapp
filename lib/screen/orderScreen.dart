@@ -20,6 +20,9 @@ class _OrderscreenState extends State<Orderscreen> {
   String? _quantity;
   String? jumlahPesanan;
   String? hargaKg;
+  String? totalPenerimaan;
+  String? piutang;
+  String? aging;
   String? _selectedProductCode;
   String? _selectedShipment;
   String? _selectedPayment;
@@ -29,7 +32,7 @@ class _OrderscreenState extends State<Orderscreen> {
   List<String> _fishVariants = [];
   final List<Map<String, String>> _orderList = [];
   List<Map<String, dynamic>> suppliersData = [];
-  Map<String, dynamic>? _selectedSupplierDetails;
+  Map<String, dynamic>? _selectedCustomerDetails;
 
 
   Future<List<Map<String, dynamic>>> fetchCustomer() async {
@@ -105,7 +108,6 @@ class _OrderscreenState extends State<Orderscreen> {
   }
 
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,8 +162,9 @@ class _OrderscreenState extends State<Orderscreen> {
                             : (value) {
                           setState(() {
                             _selectedSupplier = value;
-                            _selectedSupplierDetails = customerData.firstWhere(
-                                  (item) => '${item['id']} - ${item['nama']}' == value,
+                            _selectedCustomerDetails = customerData.firstWhere(
+                                  (item) =>
+                              '${item['id']} - ${item['nama']}' == value,
                               orElse: () => {},
                             );
                           });
@@ -174,37 +177,49 @@ class _OrderscreenState extends State<Orderscreen> {
                       // Button to add new customer
                       ElevatedButton(
                         onPressed: () async {
-                          final result = await showModalBottomSheet<Map<String, dynamic>>(
+                          final result = await showModalBottomSheet<
+                              Map<String, dynamic>>(
                             context: context,
-                            isScrollControlled: true, // Allow the modal to expand for inputs
+                            isScrollControlled: true,
+                            // Allow the modal to expand for inputs
                             builder: (_) => _AddCustomerBottomSheet(),
                           );
 
                           // Reload customer data if a new customer is added
                           if (result != null) {
                             setState(() {
-                              customerData.add(result); // Add new customer to the list
-                              _selectedSupplier = '${result['id']} - ${result['nama']}';
+                              customerData.add(
+                                  result); // Add new customer to the list
+                              _selectedSupplier =
+                              '${result['id']} - ${result['nama']}';
                             });
                           }
                         },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0690b0),
+                          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          foregroundColor: const Color(0xffe9f0f6),
+                          textStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
                         child: const Text("Tambah Customer"),
                       ),
 
 
                       // Check if the customer details are available and show the details card
-                      if (_selectedSupplierDetails != null &&
-                          _selectedSupplierDetails!.isNotEmpty)
+                      if (_selectedCustomerDetails != null &&
+                          _selectedCustomerDetails!.isNotEmpty)
                         _buildDetailCard(),
                     ],
                   );
                 },
               ),
-
-
-
-
-
 
 
               const SizedBox(height: 20),
@@ -295,6 +310,12 @@ class _OrderscreenState extends State<Orderscreen> {
               const SizedBox(height: 20),
               _buildPriceField(),
               const SizedBox(height: 20),
+              _buildTotalPenerimaanField(),
+              const SizedBox(height: 20),
+              _buildPiutangField(),
+              const SizedBox(height: 20),
+              _buildAgingField(),
+              const SizedBox(height: 20),
               FutureBuilder<List<Map<String, dynamic>>>(
                 future: fetchShipment(),
                 builder: (context, snapshot) {
@@ -302,11 +323,14 @@ class _OrderscreenState extends State<Orderscreen> {
                   return DropdownField<String>(
                     value: _selectedShipment,
                     items: shipmentData
-                        .map((item) => item['shipment'] ?? 'Unknown')  // Ensure it's a String
+                        .map((item) =>
+                    item['shipment'] ?? 'Unknown') // Ensure it's a String
                         .toList()
-                        .cast<String>(),  // Cast the List<dynamic> to List<String>
+                        .cast<String>(),
+                    // Cast the List<dynamic> to List<String>
                     label: "Shipment",
-                    itemLabel: (item) => item,  // Assuming you want to display the shipment text
+                    itemLabel: (item) => item,
+                    // Assuming you want to display the shipment text
                     onChanged: (value) {
                       setState(() {
                         _selectedShipment = value;
@@ -323,11 +347,14 @@ class _OrderscreenState extends State<Orderscreen> {
                   return DropdownField<String>(
                     value: _selectedPayment,
                     items: paymentData
-                        .map((item) => item['payment'] ?? 'Unknown')  // Ensure it's a String
+                        .map((item) =>
+                    item['payment'] ?? 'Unknown') // Ensure it's a String
                         .toList()
-                        .cast<String>(),  // Cast the List<dynamic> to List<String>
+                        .cast<String>(),
+                    // Cast the List<dynamic> to List<String>
                     label: "Payment",
-                    itemLabel: (item) => item,  // Assuming you want to display the shipment text
+                    itemLabel: (item) => item,
+                    // Assuming you want to display the shipment text
                     onChanged: (value) {
                       setState(() {
                         _selectedPayment = value;
@@ -354,21 +381,29 @@ class _OrderscreenState extends State<Orderscreen> {
 
   Widget _buildDetailCard() {
     return Card(
-      elevation: 5,  // Menambahkan bayangan agar lebih menarik
+      elevation: 5,
+      // Menambahkan bayangan agar lebih menarik
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),  // Rounded corners untuk tampilan lebih modern
+        borderRadius: BorderRadius.circular(8), // Rounded corners untuk tampilan lebih modern
       ),
-      color: const Color(0xff51bdd5),  // Warna background putih agar lebih bersih
+      color: const Color(0xff51bdd5),
+      // Warna background putih agar lebih bersih
       child: Padding(
-        padding: const EdgeInsets.all(16.0),  // Padding di dalam Card
+        padding: const EdgeInsets.all(0.0), // Padding di dalam Card
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,  // Menyusun elemen dari kiri ke kanan
+          crossAxisAlignment: CrossAxisAlignment.start,
+          // Menyusun elemen dari kiri ke kanan
           children: [
-            _buildDetailContainer("ID Customer", _selectedSupplierDetails?['id']?.toString() ?? '-'),
-            _buildDetailContainer("Nama Customer", _selectedSupplierDetails?['nama'] ?? '-'),
-            _buildDetailContainer("Telepon", _selectedSupplierDetails?['telepon'] ?? '-'),
-            _buildDetailContainer("Telepon 2", _selectedSupplierDetails?['telepon2'] ?? '-'),
-            _buildDetailContainer("Alamat", _selectedSupplierDetails?['alamat'] ?? '-'),
+            _buildDetailContainer("ID Customer",
+                _selectedCustomerDetails?['id']?.toString() ?? '-'),
+            _buildDetailContainer(
+                "Nama Customer", _selectedCustomerDetails?['nama'] ?? '-'),
+            _buildDetailContainer(
+                "Telepon", _selectedCustomerDetails?['telepon'] ?? '-'),
+            _buildDetailContainer(
+                "Telepon 2", _selectedCustomerDetails?['telepon2'] ?? '-'),
+            _buildDetailContainer(
+                "Alamat", _selectedCustomerDetails?['alamat'] ?? '-'),
           ],
         ),
       ),
@@ -406,7 +441,51 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 
-  // Add the order to the list if all fields are filled
+  Widget _buildTotalPenerimaanField() {
+    return TextField(
+      keyboardType: TextInputType.number,
+      onChanged: (value) {
+        setState(() {
+          totalPenerimaan = value; // Menyimpan jumlah yang dimasukkan
+        });
+      },
+      decoration: const InputDecoration(
+        labelText: "Total Penerimaan",
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Widget _buildPiutangField() {
+    return TextField(
+      keyboardType: TextInputType.number,
+      onChanged: (value) {
+        setState(() {
+          piutang = value; // Menyimpan jumlah yang dimasukkan
+        });
+      },
+      decoration: const InputDecoration(
+        labelText: "Piutang",
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Widget _buildAgingField() {
+    return TextField(
+      keyboardType: TextInputType.number,
+      onChanged: (value) {
+        setState(() {
+          aging = value; // Menyimpan jumlah yang dimasukkan
+        });
+      },
+      decoration: const InputDecoration(
+        labelText: "Aging",
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
   Widget _buildAddOrderButton() {
     return SizedBox(
       width: double.infinity,
@@ -416,6 +495,9 @@ class _OrderscreenState extends State<Orderscreen> {
               _selectedFishVariant != null &&
               _quantity != null &&
               jumlahPesanan != null &&
+              totalPenerimaan !=null &&
+              piutang !=null &&
+              aging !=null &&
               hargaKg != null) {
             _addOrder();
 
@@ -427,6 +509,9 @@ class _OrderscreenState extends State<Orderscreen> {
               _quantity = null;
               jumlahPesanan = null;
               hargaKg = null;
+              totalPenerimaan = null;
+              piutang = null;
+              aging = null;
               _selectedShipment = null;
               _selectedPayment = null;
             });
@@ -455,7 +540,6 @@ class _OrderscreenState extends State<Orderscreen> {
   }
 
 
-
   void _addOrder() {
     setState(() {
       _orderList.add({
@@ -464,8 +548,11 @@ class _OrderscreenState extends State<Orderscreen> {
         'quantity': _quantity!,
         'jumlahPesanan': jumlahPesanan!,
         'hargaKg': hargaKg!,
-        'shipment':_selectedShipment!,
-        'payment':_selectedPayment!,
+        'totalPenerimaan': totalPenerimaan!,
+        'piutang': piutang!,
+        'aging': aging!,
+        'shipment': _selectedShipment!,
+        'payment': _selectedPayment!,
 
       });
     });
@@ -473,7 +560,8 @@ class _OrderscreenState extends State<Orderscreen> {
 
   Widget _buildOrderTable() {
     if (_orderList.isEmpty) {
-      return const Center(child: Text("Belum ada pesanan.", style: TextStyle(fontSize: 18, color: Colors.grey)));
+      return const Center(child: Text("Belum ada pesanan.",
+          style: TextStyle(fontSize: 18, color: Colors.grey)));
     }
 
     return ListView.builder(
@@ -486,7 +574,8 @@ class _OrderscreenState extends State<Orderscreen> {
           child: Card(
             elevation: 5,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15), // Rounded corners for modern look
+              borderRadius: BorderRadius.circular(
+                  15), // Rounded corners for modern look
             ),
             color: const Color(0xffFAF9F6),
             child: Padding(
@@ -501,8 +590,16 @@ class _OrderscreenState extends State<Orderscreen> {
                   _buildDetailRow("Nama Produk", order['fish'] ?? '-'),
                   _buildDetailRow("Varian Produk", order['variant'] ?? '-'),
                   // Order Information Section
-                  _buildDetailRow("Jumlah Pesanan", order['jumlahPesanan']?.toString() ?? '-'),
-                  _buildDetailRow("Harga per Kg", order['hargaKg']?.toString() ?? '-'),
+                  _buildDetailRow("Jumlah Pesanan",
+                      order['jumlahPesanan']?.toString() ?? '-'),
+                  _buildDetailRow(
+                      "Harga per Kg", order['hargaKg']?.toString() ?? '-'),
+                  _buildDetailRow(
+                      "Total Penerimaan", order['totalPenerimaan']?.toString() ?? '-'),
+                  _buildDetailRow(
+                      "Piutang", order['piutang']?.toString() ?? '-'),
+                  _buildDetailRow(
+                      "Aging", order['aging']?.toString() ?? '-'),
                   _buildStatusRow("Shipment", order['shipment'] ?? '-'),
                   _buildStatusRow("Payment", order['payment'] ?? '-'),
                   const SizedBox(height: 12),
@@ -531,7 +628,9 @@ class _OrderscreenState extends State<Orderscreen> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 16,fontWeight: FontWeight.w600, color: Colors.black54),
+              style: const TextStyle(fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -547,7 +646,9 @@ class _OrderscreenState extends State<Orderscreen> {
     if (label == "Payment") {
       statusColor = value == "Lunas" ? Colors.green : Colors.red;
     } else if (label == "Shipment") {
-      statusColor = value == "Open" ? Colors.blue : (value == "Proses" ? Colors.orange : Colors.green);
+      statusColor = value == "Open" ? Colors.blue : (value == "Proses"
+          ? Colors.orange
+          : Colors.green);
     }
 
     return Padding(
@@ -564,34 +665,39 @@ class _OrderscreenState extends State<Orderscreen> {
           ),
           Text(
             value,
-            style: TextStyle(fontSize: 16,fontWeight: FontWeight.w600, color: statusColor),
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w600, color: statusColor),
           ),
         ],
       ),
     );
   }
 
-
   _buildDetailContainer(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),  // Padding vertical untuk jarak antar item
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      // Padding vertical untuk jarak antar item
       child: Card(
-        elevation: 5,  // Menambahkan bayangan agar lebih menarik
+        elevation: 5, // Menambahkan bayangan agar lebih menarik
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),  // Rounded corners untuk tampilan lebih modern
+          borderRadius: BorderRadius.circular(
+              12), // Rounded corners untuk tampilan lebih modern
         ),
-        color: Colors.white,  // Warna background putih agar lebih bersih
+        color: Colors.white, // Warna background putih agar lebih bersih
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),  // Padding di dalam Card
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+          // Padding di dalam Card
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,  // Menempatkan label dan value di sisi yang berbeda
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Menempatkan label dan value di sisi yang berbeda
             children: [
               Text(
                 label,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xff06809c),  // Menggunakan warna yang sesuai dengan tema
+                  color: Color(
+                      0xff06809c), // Menggunakan warna yang sesuai dengan tema
                 ),
               ),
               Text(
@@ -600,7 +706,7 @@ class _OrderscreenState extends State<Orderscreen> {
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: "Montserrat",
-                  color: Colors.black87,  // Warna teks nilai
+                  color: Colors.black87, // Warna teks nilai
                 ),
               ),
             ],
@@ -609,7 +715,6 @@ class _OrderscreenState extends State<Orderscreen> {
       ),
     );
   }
-
 
   Widget _buildConfirmationButton(BuildContext context) {
     return SizedBox(
@@ -633,21 +738,23 @@ class _OrderscreenState extends State<Orderscreen> {
                   // Menghitung total harga
                   double totalHarga = 0.0;
                   for (var order in _orderList) {
-                    double jumlahPesanan = double.tryParse(order['jumlahPesanan'].toString()) ?? 0.0;
-                    double hargaKg = double.tryParse(order['hargaKg'].toString()) ?? 0.0;
+                    double jumlahPesanan = double.tryParse(
+                        order['jumlahPesanan'].toString()) ?? 0.0;
+                    double hargaKg = double.tryParse(
+                        order['hargaKg'].toString()) ?? 0.0;
                     totalHarga += jumlahPesanan * hargaKg;
                   }
                   // Format totalHarga as Rupiah
-                  String formattedTotalHarga = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ').format(totalHarga);
+                  String formattedTotalHarga = NumberFormat.currency(
+                      locale: 'id_ID', symbol: 'Rp ').format(totalHarga);
                   print('Total Harga: $formattedTotalHarga');
-                  // Mengirimkan data dengan format yang benar
+
+                  // Kirim data secara terpisah tanpa pembungkus
                   return ConfirmationScreen(
-                    customerData: {
-                      'Nama Customer': _selectedSupplier ?? 'Unknown',
-                      'items': _orderList, // Pastikan ini adalah list, bukan string
-                    },
-                    totalHarga: totalHarga.toString(),
-                    tanggalTransaksi: DateTime.now().toString(),
+                    selectedCustomerDetails: _selectedCustomerDetails,
+                    orderList: _orderList,
+                    totalHarga: formattedTotalHarga
+
                   );
                 },
               ),
@@ -672,6 +779,7 @@ class _OrderscreenState extends State<Orderscreen> {
     );
   }
 }
+
 
 
 

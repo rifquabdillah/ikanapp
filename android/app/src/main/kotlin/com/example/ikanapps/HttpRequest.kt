@@ -67,6 +67,10 @@ class HttpRequest(private val context: Context) {
         val data: List<Map<String, Any>> // The response contains a list of Fish objects.
     )
 
+    data class SaveOrderRequest(
+        val body: Map<String, Any>
+    )
+
     fun login(
         username: String,
         password: String,
@@ -337,46 +341,46 @@ class HttpRequest(private val context: Context) {
     }
 
     fun saveOrder(
-        customerData: Map<String, Any>, // Use Any if values are not strictly strings
-        orderData: List<Map<String, Any>>, // Ensure the inner list also uses Any
+        body: Map<String, Any>,
         callback: (List<Map<String, Any>>) -> Unit
     ) {
-        val requestData = mapOf(
-            "customerData" to customerData,
-            "orderList" to orderData
-        )
+        // Log data yang akan dikirim
+        println("Data yang akan dikirim: $body") // Log untuk melihat data yang akan dikirim
 
+        // Prepare the request data with both customerData and orderList
+        val requestData = SaveOrderRequest(body)
 
-        Log.d("HttpRequest", "Request Data: $requestData")
+        // Log requestData untuk memverifikasi apakah datanya sudah benar
+        println("RequestData: $requestData") // Log requestData yang sudah dipersiapkan
 
+        // Make the API request using Retrofit
         val call = apiRoutes.saveOrder(requestData)
-
         call.enqueue(object : retrofit2.Callback<SaveOrderResponse> {
             override fun onResponse(
                 call: Call<SaveOrderResponse>,
                 response: Response<SaveOrderResponse>
             ) {
-                Log.d("HttpRequest", "Order response received")
                 if (response.isSuccessful) {
                     response.body()?.let { saveOrderResponse ->
-                        Log.d("HttpRequest", "Full response body: $saveOrderResponse")
+                        // Log untuk melihat response yang diterima dari API
+                        println("Response dari API: ${saveOrderResponse.data}") // Log respons dari server
                         callback(saveOrderResponse.data ?: emptyList())
                     } ?: run {
-                        Log.w("HttpRequest", "Response body is null")
                         callback(emptyList())
                     }
                 } else {
-                    Log.e("HttpRequest", "API error: ${response.code()} ${response.message()}")
                     callback(emptyList())
                 }
             }
 
             override fun onFailure(call: Call<SaveOrderResponse>, t: Throwable) {
-                Log.e("HttpRequest", "Request failed: ${t.message}")
-                callback(emptyList())
+                // Log untuk melihat error jika request gagal
+                println("Gagal mengirim request: ${t.message}") // Log error yang terjadi
+                callback(emptyList())  // Return an empty list on failure
             }
         })
     }
+
 
     fun getOrder(callback: (List<Map<String, Any>>) -> Unit) {
         Log.d("HttpRequest", "Sending stok request")

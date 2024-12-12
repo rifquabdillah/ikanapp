@@ -276,43 +276,25 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
-
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SAVE_ORDER_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "saveOrder" -> {
-                        val customerData = call.argument<Map<String, String>>("customerData")
-                        val orderList = call.argument<List<Map<String, String>>>("orderList")
-                        Log.d("PARAMETER", "customerData: $customerData, orderList: $orderList")
-
-                        if (customerData != null && orderList != null) {
-                            httpRequest.saveOrder(customerData, orderList) { responseData ->
-                                if (responseData.isNotEmpty()) {
-                                    // Success case: Return data back to the Flutter side
-                                    result.success(responseData)
-                                } else {
-                                    // Failure case: No data found or API returned an error
-                                    result.error("EMPTY_RESPONSE", "No data returned from saveOrder", null)
-                                }
+                        val body = call.argument<Map<String, Any>>("body")
+                        Log.d("PARAMETER", "body: $body")
+                        if (body != null) {
+                            httpRequest.saveOrder(body) { responseList ->
+                                result.success(responseList)
                             }
                         } else {
-                            result.error("MISSING_FIELDS", "Some fields are missing", null)
+                            result.error("INVALID_ARGUMENTS", "Body argument is missing or null", null)
                         }
                     }
-
-                    // Handle other methods here
-                    "anotherMethod" -> {
-                        // Implementation for another method
-                        result.success("Handled anotherMethod")
-                    }
-
                     else -> {
-                        result.notImplemented() // Return this if the method is not recognized
+                        result.notImplemented()
                     }
                 }
             }
-
-
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, GET_ORDER_CHANNEL)
             .setMethodCallHandler { call, result ->
@@ -420,3 +402,4 @@ class MainActivity : FlutterActivity() {
             }
             }
         }
+

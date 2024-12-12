@@ -210,39 +210,31 @@ class NativeChannel {
   }
 
   Future<String> saveOrder({
-    required Map<String, dynamic> customerData,
-    required List<Map<String, dynamic>> orderList,
-    required String totalHarga,
-    required String tanggalTransaksi,
+    required Map<String, dynamic> body,
   }) async {
     try {
-      // Convert data to JSON strings
-      final encodedCustomerData = jsonEncode(customerData);
-      final encodedOrderList = jsonEncode(orderList);
 
-      // Send data via MethodChannel
+      // Pass raw objects to the method channel, not JSON strings
       final result = await SAVE_ORDER_CHANNEL.invokeMethod('saveOrder', {
-        'customerData': encodedCustomerData,
-        'orderList': encodedOrderList,
-        'totalHarga': totalHarga,
-        'tanggalTransaksi': tanggalTransaksi,
+        'body': body,
       });
 
-      // Check the result
+      // Check if the result is a String (success response)
       if (result is String) {
         return result;
       } else {
         throw Exception("Unexpected result type: ${result.runtimeType}");
       }
     } on PlatformException catch (e) {
+      // Handle errors related to method channel
       print('Failed to save order: ${e.message}');
       throw Exception('Failed to save order: ${e.message}');
     } catch (e) {
+      // Handle other errors
       print('Error saving order: $e');
       throw Exception('Error saving order: $e');
     }
   }
-
 
 
 
@@ -344,9 +336,27 @@ class NativeChannel {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchGetOrder() async {
+    try {
+      final result = await GET_ORDER_CHANNEL.invokeMethod('fetchGetOrder');
 
-
-
+      // Make sure the result is a List of Maps
+      if (result is List) {
+        // Assuming the result is a list of maps (key-value pairs)
+        return List<Map<String, dynamic>>.from(result);
+      } else {
+        throw 'Expected a List<Map<String, dynamic>> but received: ${result.runtimeType}';
+      }
+    } on PlatformException catch (e) {
+      print('Failed to get orders: ${e.message}');
+      throw 'Failed to get orders: ${e.message}';
+    }
+  }
 }
+
+
+
+
+
 
 

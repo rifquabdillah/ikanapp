@@ -13,7 +13,7 @@ class PembelianScreen extends StatefulWidget {
 }
 
 class _PembelianScreenState extends State<PembelianScreen> {
-  Map<String, String>? _selectedCustomer;
+  String? _selectedCustomer;
   String? _selectedFish;
   String? _selectedSupplier;
   String? _selectedFishVariant;
@@ -24,59 +24,69 @@ class _PembelianScreenState extends State<PembelianScreen> {
 
   List<String> _fishVariants = [];
   final List<Map<String, String>> _orderList = [];
-  List<Map<String, dynamic>> suppliersData = [];
-  Map<String, dynamic>? _selectedSupplierDetails;
+  List<Map<String, String>> suppliersData = [];
+  Map<String, String>? _selectedSupplierDetails;
 
-  String _calculateTotal() {
-    double count = double.tryParse(_count ?? '0') ??
-        0; // Gunakan _quantity untuk jumlah
-    double price = double.tryParse(_price ?? '0') ?? 0; // Harga per kg
-    double total = count * price; // Menghitung total harga
-    return total.toStringAsFixed(0); // Menampilkan tanpa desimal
-  }
 
-  Future<List<Map<String, dynamic>>> fetchSupplier() async {
+  Future<List<Map<String, String>>> fetchSupplier() async {
     try {
       print("Fetching customer data...");
       var produkData = await NativeChannel.instance.fetchSupplier();
       print("Data fetched: $produkData");
-      return produkData;
+      return produkData.map((item) {
+        return {
+          'kodeSupplier': item['kodeSupplier'].toString(),
+          'nama': item['nama'].toString(),
+          'id': item['id'].toString(),
+          'nomor_handphone': item['nomor_handphone'].toString(),
+          'alamat': item['alamat'].toString()
+        };
+      }).toList();
     } catch (e) {
       print("Error fetching customer data: $e");
       return [];
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchStok() async {
+  Future<List<Map<String, String>>> fetchStok() async {
     try {
       print("Fetching stock data...");
       var produkData = await NativeChannel.instance.fetchStok();
       print("Data fetched: $produkData");
-      return produkData;
+      return produkData.map((item) {
+        return {
+          'nama': item['nama'].toString(),
+          'kodeProduk': item['kodeProduk'].toString()
+        };
+      }).toList();
     } catch (e) {
       print("Error fetching stock data: $e");
       return [];
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchVarian() async {
+  Future<List<Map<String, String>>> fetchVarian() async {
     try {
       print("Fetching fish variant data...");
       var produkData = await NativeChannel.instance.fetchVarian();
       print("Data fetched: $produkData");
-      return produkData;
+      return produkData.map((item) {
+        return {'nama': item['nama'].toString()};
+      }).toList();
     } catch (e) {
       print("Error fetching data: $e");
       return [];
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchBobot() async {
+  Future<List<Map<String, String>>> fetchBobot() async {
     try {
       print("Fetching fish weight data...");
       var produkData = await NativeChannel.instance.fetchBobot();
       print("Data fetched: $produkData");
-      return produkData;
+      return produkData.map((item) {
+        return {'bobot': item['bobot'].toString()};
+      }).toList();
     } catch (e) {
       print("Error fetching data: $e");
       return [];
@@ -112,10 +122,10 @@ class _PembelianScreenState extends State<PembelianScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Customer Dropdown
-              FutureBuilder<List<Map<String, dynamic>>>(
+              FutureBuilder<List<Map<String, String>>>(
                 future: fetchSupplier(),
                 builder: (context, snapshot) {
-                  List<Map<String, dynamic>> supplierData = snapshot.data ?? [];
+                  List<Map<String, String>> supplierData = snapshot.data ?? [];
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -140,7 +150,7 @@ class _PembelianScreenState extends State<PembelianScreen> {
                       const SizedBox(height: 10),
                       _buildDetailContainer(
                         "ID Supplier",
-                        _selectedSupplierDetails?['id']?.toString() ?? '-',
+                        _selectedSupplierDetails?['id'] ?? '-',
                       ),
                       _buildDetailContainer(
                         "Kode Supplier",
@@ -163,7 +173,7 @@ class _PembelianScreenState extends State<PembelianScreen> {
               const SizedBox(height: 20),
 
               // Fish Type Dropdown
-              FutureBuilder<List<Map<String, dynamic>>>(
+              FutureBuilder<List<Map<String, String>>>(
                   future: fetchStok(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -173,12 +183,10 @@ class _PembelianScreenState extends State<PembelianScreen> {
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return Text('Tidak ada data stok tersedia.');
                     } else {
-                      List<Map<String, dynamic>> stockData = snapshot.data ??
-                          [];
+                      List<Map<String, String>> stockData = snapshot.data ?? [];
                       return DropdownField<String>(
                         value: _selectedFish,
-                        items: stockData.map((item) => item['nama'].toString())
-                            .toList(),
+                        items: stockData.map((item) => item['nama'] ?? '').toList(),
                         label: "Pilih Ikan",
                         itemLabel: (item) => item,
                         onChanged: (value) {
@@ -189,7 +197,7 @@ class _PembelianScreenState extends State<PembelianScreen> {
                                   (item) => item['nama'] == value,
                             );
                             _selectedProductCode =
-                                selectedProduct?['kodeProduk'] ?? '-';
+                                selectedProduct['kodeProduk'] ?? '-';
                           });
                         },
                       );
@@ -201,14 +209,13 @@ class _PembelianScreenState extends State<PembelianScreen> {
               const SizedBox(height: 20),
 
               // Fish Variant Dropdown
-              FutureBuilder<List<Map<String, dynamic>>>(
+              FutureBuilder<List<Map<String, String>>>(
                 future: fetchVarian(),
                 builder: (context, snapshot) {
-                  List<Map<String, dynamic>> variantData = snapshot.data ?? [];
+                  List<Map<String, String>> variantData = snapshot.data ?? [];
                   return DropdownField<String>(
                     value: _selectedFishVariant,
-                    items: variantData.map((item) => item['nama'] as String)
-                        .toList(),
+                    items: variantData.map((item) => item['nama'] ?? '').toList(),
                     label: "Pilih Varian Ikan",
                     itemLabel: (item) => item,
                     onChanged: (value) {
@@ -223,14 +230,13 @@ class _PembelianScreenState extends State<PembelianScreen> {
               const SizedBox(height: 20),
 
               // Fish Weight Dropdown
-              FutureBuilder<List<Map<String, dynamic>>>(
+              FutureBuilder<List<Map<String, String>>>(
                 future: fetchBobot(),
                 builder: (context, snapshot) {
-                  List<Map<String, dynamic>> bobotData = snapshot.data ?? [];
+                  List<Map<String, String>> bobotData = snapshot.data ?? [];
                   return DropdownField<String>(
                     value: _quantity,
-                    items: bobotData.map((item) => item['bobot'] as String)
-                        .toList(),
+                    items: bobotData.map((item) => item['bobot'] ?? '').toList(),
                     label: "Masukkan Bobot Ikan",
                     itemLabel: (item) => item,
                     onChanged: (value) {
@@ -266,10 +272,10 @@ class _PembelianScreenState extends State<PembelianScreen> {
 
   Widget _buildCountField() {
     return TextField(
-      keyboardType: TextInputType.number,
+      keyboardType: TextInputType.number, // To handle numbers
       onChanged: (value) {
         setState(() {
-          _count = value; // Menyimpan jumlah yang dimasukkan
+          _count = value; // Store the count directly as a string
         });
       },
       decoration: const InputDecoration(
@@ -279,12 +285,13 @@ class _PembelianScreenState extends State<PembelianScreen> {
     );
   }
 
+
   Widget _buildPriceField() {
     return TextField(
-      keyboardType: TextInputType.number,
+      keyboardType: TextInputType.numberWithOptions(decimal: true), // To handle decimals
       onChanged: (value) {
         setState(() {
-          _price = value;
+          _price = value; // Store the price as a string
         });
       },
       decoration: const InputDecoration(
@@ -293,6 +300,7 @@ class _PembelianScreenState extends State<PembelianScreen> {
       ),
     );
   }
+
 
   Widget _buildDetailContainer(String label, String? value) {
     return Container(
@@ -362,17 +370,20 @@ class _PembelianScreenState extends State<PembelianScreen> {
     );
   }
 
+
   void _addOrder() {
     setState(() {
       _orderList.add({
         'fish': _selectedFish!,
         'variant': _selectedFishVariant!,
-        'quantity': _quantity!,
-        'count': _count!,
-        'price': _price!,
+        'quantity': _quantity!,  // This will now store the bobot
+        'count': _count!,        // This will store the jumlahPesanan
+        'price': _price!,        // This will store the hargaKg
       });
     });
   }
+
+
 
   Widget _buildOrderTable() {
     if (_orderList.isEmpty) {
@@ -404,10 +415,10 @@ class _PembelianScreenState extends State<PembelianScreen> {
                   Text("Nama Customer: ${_selectedSupplier ?? 'Belum dipilih'}"),
                   const SizedBox(height: 8),
                   Text("Jenis Ikan: ${order['fish']}"),
-                  Text("Kode Produk (FK): ${order['productCode']}"),
                   Text("Varian Ikan: ${order['variant']}"),
-                  Text("Jumlah: ${order['quantity']}"),
-                  Text("Harga Total: ${_calculateTotal()}"),
+                  Text("Bobot: ${order['quantity']}"),  // Displays bobot
+                  Text("Jumlah Pesanan: ${order['count']}"), // Displays jumlahPesanan
+                  Text("Harga (per kg): ${order['price']}"), // Displays hargaKg
                 ],
               ),
             ),
@@ -416,6 +427,7 @@ class _PembelianScreenState extends State<PembelianScreen> {
       },
     );
   }
+
 
   Widget _buildConfirmationButton(BuildContext context) {
     return SizedBox(
@@ -436,27 +448,26 @@ class _PembelianScreenState extends State<PembelianScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => ConfirmationPembelianScreen(
-                  customerData: {
-                    'Nama Customer': _selectedSupplier ?? 'Unknown', // Berikan nilai default jika _selectedSupplier null
-                  },
+                  id: _selectedSupplierDetails?['id'] ?? 'Unknown ID',
+                  kodeSupplier: _selectedSupplierDetails?['kodeSupplier'] ?? 'Unknown Kode',
+                  nama: _selectedSupplierDetails?['nama'] ?? 'Unknown Name',
+                  hargakg: _price ?? 'Unknown Harga',  // Harga per kg
+                  jumlahPesanan: _count ?? '0',        // Jumlah Pesanan
+                  tglTransaksi: _selectedSupplierDetails?['tglTransaksi'] ?? 'Unknown Date',
                   orderList: _orderList.isNotEmpty
                       ? _orderList.map((order) {
                     return {
-                      'item': order['fish'] ?? 'Unknown Fish', // Default untuk jenis ikan
-                      'variant': order['variant'] ?? 'Unknown Variant', // Default untuk varian
-                      'quantity': order['quantity'] ?? 0, // Default untuk jumlah
-                      'price': order['price'] ?? 0, // Default untuk harga
+                      'item': order['fish'] ?? 'Unknown Fish',
+                      'variant': order['variant'] ?? 'Unknown Variant',
+                      'quantity': order['quantity'] ?? '0', // Bobot
+                      'count': order['count'] ?? '0',       // Jumlah Pesanan
+                      'price': order['price'] ?? '0',       // Harga per kg
                     };
                   }).toList()
                       : [],
-                  params: {
-                    'Total Harga': _orderList.isNotEmpty ? _calculateTotal() : '0', // Default untuk total harga
-                    'Tanggal Transaksi': DateTime.now().toString(), // Contoh data tambahan
-                  },
                 ),
               ),
             );
-
           }
         },
         child: const Text("Konfirmasi Transaksi"),
